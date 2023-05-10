@@ -27,11 +27,13 @@ add_toy_chapter(toyc-ch7
   mlir/LowerToLLVM.cpp
   mlir/ShapeInferencePass.cpp
   mlir/ToyCombine.cpp
+  mlir/LowerToPoseidon.cpp
 
   DEPENDS
   ToyCh7ShapeInferenceInterfaceIncGen
   ToyCh7OpsIncGen
   ToyCh7CombineIncGen
+  ToyCh7POpsIncGen
   )
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

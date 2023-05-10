@@ -14,6 +14,12 @@
 #include "toy/MLIRGen.h"
 #include "toy/Parser.h"
 #include "toy/Passes.h"
+//===----------------------------------------------------------------------===//
+// ToyToPoseidonLoweringPass
+//===----------------------------------------------------------------------===//
+#include "Poseidon/PoseidonDialect.h"
+#include "Poseidon/PoseidonOps.h"
+#include "Poseidon/Passes.h"
 
 #include "mlir/Dialect/Affine/Passes.h"
 #include "mlir/ExecutionEngine/ExecutionEngine.h"
@@ -64,7 +70,11 @@ enum Action {
   DumpMLIRAffine,
   DumpMLIRLLVM,
   DumpLLVMIR,
-  RunJIT
+  RunJIT,
+  //===----------------------------------------------------------------------===//
+  // ToyToPoseidonLoweringPass
+  //===----------------------------------------------------------------------===//
+  DumpMLIRPoseidon
 };
 } // namespace
 static cl::opt<enum Action> emitAction(
@@ -76,9 +86,16 @@ static cl::opt<enum Action> emitAction(
     cl::values(clEnumValN(DumpMLIRLLVM, "mlir-llvm",
                           "output the MLIR dump after llvm lowering")),
     cl::values(clEnumValN(DumpLLVMIR, "llvm", "output the LLVM IR dump")),
+    //===----------------------------------------------------------------------===//
+    // ToyToPoseidonLoweringPass
+    //===----------------------------------------------------------------------===//
+    cl::values(clEnumValN(DumpMLIRPoseidon, "mlir-poseidon",
+                          "output the MLIR dump after poseidon lowering")),
+
     cl::values(
         clEnumValN(RunJIT, "jit",
                    "JIT the code and run it by invoking the main function")));
+    
 
 static cl::opt<bool> enableOpt("opt", cl::desc("Enable optimizations"));
 
@@ -139,6 +156,11 @@ int loadAndProcessMLIR(mlir::MLIRContext &context,
   // Check to see what granularity of MLIR we are compiling to.
   bool isLoweringToAffine = emitAction >= Action::DumpMLIRAffine;
   bool isLoweringToLLVM = emitAction >= Action::DumpMLIRLLVM;
+  //===----------------------------------------------------------------------===//
+  // PoseidonLoweringPass
+  //===----------------------------------------------------------------------===//
+  bool isLoweringToPoseidon = emitAction >= Action::DumpMLIRPoseidon;
+
 
   if (enableOpt || isLoweringToAffine) {
     // Inline all functions into main and then delete them.
@@ -167,6 +189,18 @@ int loadAndProcessMLIR(mlir::MLIRContext &context,
       optPM.addPass(mlir::createLoopFusionPass());
       optPM.addPass(mlir::createAffineScalarReplacementPass());
     }
+  }
+  //===----------------------------------------------------------------------===//
+  // PoseidonLoweringPass
+  //===----------------------------------------------------------------------===//
+  if (isLoweringToPoseidon) {
+    // Partially lower the toy dialect.
+    pm.addPass(mlir::poseidon::createLowerToPoseidonPass());
+
+    // Add a few cleanups post lowering.
+    mlir::OpPassManager &optPM = pm.nest<mlir::func::FuncOp>();
+    optPM.addPass(mlir::createCanonicalizerPass());
+    optPM.addPass(mlir::createCSEPass());
   }
 
   if (isLoweringToLLVM) {
@@ -289,6 +323,9 @@ int main(int argc, char **argv) {
   // Otherwise, we must be running the jit.
   if (emitAction == Action::RunJIT)
     return runJit(*module);
+
+  if(emitAction == Action::DumpMLIRPoseidon)
+    llvm::errs() << "Poseidon dialect \n";
 
   llvm::errs() << "No action specified (parsing only?), use -emit=<action>\n";
   return -1;

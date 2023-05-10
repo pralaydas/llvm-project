@@ -9,4 +9,4 @@ add_mlir_dialect(PoseidonOps poseidon)
 add_mlir_doc(PoseidonDialect PoseidonDialect Poseidon/ -gen-dialect-doc)
 add_mlir_doc(PoseidonOps PoseidonOps Poseidon/ -gen-op-doc)
 
-
+add_public_tablegen_target(ToyCh7POpsIncGen)

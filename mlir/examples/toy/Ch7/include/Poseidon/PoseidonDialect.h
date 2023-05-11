@@ -11,6 +11,6 @@
 
 #include "mlir/IR/Dialect.h"
 
-#include "Poseidon/PoseidonOpsDialect.h.inc"
+#include "Poseidon/PoseidonDialect.h.inc"
 
 #endif // POSEIDON_POSEIDONDIALECT_H

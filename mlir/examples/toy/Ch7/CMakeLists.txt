@@ -6,7 +6,7 @@ endif()
 # For a better template to copy, see examples/standalone
 include_directories(include)
 add_subdirectory(include)
-add_subdirectory(lib)
+# add_subdirectory(lib)
 
 set(LLVM_LINK_COMPONENTS
   Core
@@ -29,6 +29,8 @@ add_toy_chapter(toyc-ch7
   mlir/ShapeInferencePass.cpp
   mlir/ToyCombine.cpp
   mlir/LowerToPoseidon.cpp
+  lib/Dialect/Poseidon/PoseidonDialect.cpp
+  lib/Dialect/Poseidon/PoseidonOps.cpp
 
   DEPENDS
   ToyCh7ShapeInferenceInterfaceIncGen

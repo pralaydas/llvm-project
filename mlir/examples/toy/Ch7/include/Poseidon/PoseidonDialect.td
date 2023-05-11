@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef POSEIDON_DIALECT
-#define POSEIDON_DIALECT
+#ifndef POSEIDON_DIALECT_TD
+#define POSEIDON_DIALECT_TD
 
 include "mlir/IR/OpBase.td"
 
@@ -24,6 +24,7 @@ def Poseidon_Dialect : Dialect {
         working inside of the LLVM source tree.
     }];
     let cppNamespace = "::mlir::poseidon";
+    let useFoldAPI = kEmitFoldAdaptorFolder;
 }
 
 //===----------------------------------------------------------------------===//
@@ -33,4 +34,4 @@ def Poseidon_Dialect : Dialect {
 class Poseidon_Op<string mnemonic, list<Trait> traits = []> :
         Op<Poseidon_Dialect, mnemonic, traits>;
 
-#endif // POSEIDON_DIALECT
+#endif // POSEIDON_DIALECT_TD

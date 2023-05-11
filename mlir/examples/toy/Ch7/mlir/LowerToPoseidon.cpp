@@ -67,7 +67,8 @@ struct ToyToPoseidonLoweringPass
         MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(ToyToPoseidonLoweringPass)
 
         void getDependentDialects(DialectRegistry &registry) const override {
-            registry.insert<poseidon::PoseidonDialect, func::FuncDialect> ();
+            registry.insert<poseidon::PoseidonDialect>();
+            registry.insert<func::FuncDialect>();
         }
         void runOnOperation() override;
 };

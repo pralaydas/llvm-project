@@ -6,10 +6,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef POSEIDON_OPS
-#define POSEIDON_OPS
+#ifndef POSEIDON_OPS_TD
+#define POSEIDON_OPS_TD
 
-include "Poseidon/PoseidonDialect.td"
+include "PoseidonDialect.td"
 include "mlir/Interfaces/InferTypeOpInterface.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 
@@ -40,4 +40,4 @@ def Poseidon_FooOp : Poseidon_Op<"foo", [Pure,
     }];
 }
 
-#endif // POSEIDON_OPS
+#endif // POSEIDON_OPS_TD

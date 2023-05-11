@@ -6,6 +6,7 @@ endif()
 # For a better template to copy, see examples/standalone
 include_directories(include)
 add_subdirectory(include)
+add_subdirectory(lib)
 
 set(LLVM_LINK_COMPONENTS
   Core

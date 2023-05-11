@@ -31,13 +31,13 @@
 #include "Poseidon/Passes.h"
 
 using namespace mlir;
-
+using namespace poseidon;
 //===----------------------------------------------------------------------===//
 // ToyToPoseidon RewritePatterns: Return operations
 //===----------------------------------------------------------------------===//
 
-struct ReturnOpLowering : public OpRewritePattern<toy::returnOp> {
-    using OprewritePattern<toy::ReturnOp>::OpRewritePattern;
+struct ReturnOpLowering : public OpRewritePattern<toy::ReturnOp> {
+    using OpRewritePattern<toy::ReturnOp>::OpRewritePattern;
 
     LogicalResult matchAndRewrite(toy::ReturnOp op,
                                     PatternRewriter &rewriter) const final {
@@ -47,7 +47,7 @@ struct ReturnOpLowering : public OpRewritePattern<toy::returnOp> {
         return failure();  
 
     // we lower 'toy.return' directly to "func.return".
-    rewriter.replaceopWithNewOp<func::ReturnOp>(op);
+    rewriter.replaceOpWithNewOp<func::ReturnOp>(op);
     return success(); 
     }
 };
@@ -67,20 +67,20 @@ struct ToyToPoseidonLoweringPass
         MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(ToyToPoseidonLoweringPass)
 
         void getDependentDialects(DialectRegistry &registry) const override {
-            registry.insert<PoseidonDialect> ();
+            registry.insert<poseidon::PoseidonDialect, func::FuncDialect> ();
         }
-        void runOnOperation() final;
+        void runOnOperation() override;
 };
 } // namespace
 
-void ToyToPoseidonLoweringpass::runOnOperation() {
+void ToyToPoseidonLoweringPass::runOnOperation() {
     //The first thing to define is the conversion target. This will define the
     // final target for this lowering.
     ConversionTarget target(getContext());
     
     // We define the specific operations, or dialects, that are legal targets for
     // this lowering. In our case, we are lowering to our custom Poseidon dialect.
-    target.addLegalDialect<PoseidonDialect, func::FuncDialect>();
+    target.addLegalDialect<poseidon::PoseidonDialect, func::FuncDialect>();
 
     // We also define the Toy dialect as Illegal so that the conversion will fail
     // if any of these operations are *not* converted. Given that we actually want
@@ -91,13 +91,13 @@ void ToyToPoseidonLoweringpass::runOnOperation() {
     target.addIllegalDialect<toy::ToyDialect>();
     target.addDynamicallyLegalOp<toy::PrintOp>([](toy::PrintOp op){
         return llvm::none_of(op->getOperandTypes(),
-                            [](Type type){ return type.isa<tensorType>(); });
+                            [](Type type){ return type.isa<TensorType>(); });
     });
 
     // Now that the conversion target has been defined, we just need to provide
     // the set of patterns that will lower the Toy operations.
     RewritePatternSet patterns(&getContext());
-    patterns.add<ConstantOpLowering, ReturnOpLowering>(&getContext());
+    patterns.add<ReturnOpLowering>(&getContext());
 
     // With the target and rewrite patterns defined, we can now attempt the
     // conversion. The conversion will signal failure if any of our `illegal`

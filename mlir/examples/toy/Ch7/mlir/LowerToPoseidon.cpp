@@ -59,8 +59,8 @@ struct ReturnOpLowering : public OpRewritePattern<toy::ReturnOp> {
 struct FuncOpLowering : public OpConversionPattern<toy::FuncOp> {
     using OpConversionPattern<toy::FuncOp>::OpConversionPattern;
 
-    LogicalResult
-    matchAndRewrite(toy::FuncOp op, OpAdaptor adaptor,
+    
+    LogicalResult matchAndRewrite(toy::FuncOp op, OpAdaptor adaptor,
                     ConversionPatternRewriter &rewriter) const final {
         // We only lower the main function as we expect that all other functions
         // have been inlined.

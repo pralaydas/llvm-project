@@ -177,7 +177,6 @@ int loadAndProcessMLIR(mlir::MLIRContext &context,
 
   if (isLoweringToAffine) {
     // Partially lower the toy dialect.
-    // llvm::errs() << "1. affine dialect \n";
     pm.addPass(mlir::toy::createLowerToAffinePass());
 
     // Add a few cleanups post lowering.
@@ -190,7 +189,6 @@ int loadAndProcessMLIR(mlir::MLIRContext &context,
       optPM.addPass(mlir::createLoopFusionPass());
       optPM.addPass(mlir::createAffineScalarReplacementPass());
     }
-    // llvm::errs() << "2. Affine dialect \n";
   }
   //===----------------------------------------------------------------------===//
   // PoseidonLoweringPass
@@ -201,10 +199,10 @@ int loadAndProcessMLIR(mlir::MLIRContext &context,
     pm.addPass(mlir::poseidon::createLowerToPoseidonPass());
 
     // Add a few cleanups post lowering.
-    mlir::OpPassManager &optPM = pm.nest<mlir::func::FuncOp>();
-    optPM.addPass(mlir::createCanonicalizerPass());
-    optPM.addPass(mlir::createCSEPass());
-    // llvm::errs() << "2. Poseidon dialect \n";
+    // mlir::OpPassManager &optPM = pm.nest<mlir::func::FuncOp>();
+    // optPM.addPass(mlir::createCanonicalizerPass());
+    // optPM.addPass(mlir::createCSEPass());
+  
   }
 
   if (isLoweringToLLVM) {
@@ -316,9 +314,7 @@ int main(int argc, char **argv) {
   // If we aren't exporting to non-mlir, then we are done.
   bool isOutputingMLIR = emitAction <= Action::DumpMLIRLLVM;
   if (isOutputingMLIR) {
-    // llvm::errs() << "3. Affine dialect \n";
     module->dump();
-    // llvm::errs() << "4. Affine dialect \n";
     return 0;
   }
 
@@ -331,7 +327,6 @@ int main(int argc, char **argv) {
     return runJit(*module);
 
   if(emitAction == Action::DumpMLIRPoseidon){
-    // llvm::errs() << "1. Poseidon dialect \n";
     module->dump();
     return 0;
   }

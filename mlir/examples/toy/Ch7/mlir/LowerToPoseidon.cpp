@@ -31,7 +31,9 @@
 #include "Poseidon/Passes.h"
 
 using namespace mlir;
-using namespace poseidon;
+// using namespace poseidon;
+
+namespace {
 //===----------------------------------------------------------------------===//
 // ToyToPoseidon RewritePatterns: Return operations
 //===----------------------------------------------------------------------===//
@@ -81,6 +83,28 @@ struct FuncOpLowering : public OpConversionPattern<toy::FuncOp> {
         return success();
     }
 };
+
+//===----------------------------------------------------------------------===//
+// ToyToAffine RewritePatterns: Binary operations
+//===----------------------------------------------------------------------===//
+// template <typename BinaryOp, typename LoweredBinaryOp>
+// struct BinaryOpLowering : public ConversionPattern {
+//     BinaryOpLowering(MLIRCoontext *ctx)
+//         : ConversionPattern(BinaryOp::getOperationName(), 1, ctx) {}
+
+//     LogicalResult matchRewrite(Operation *op, ArrayRef<Value> operands,
+//                             CoonversionPatternRewriter &rewriter) const final{
+        
+//     }
+// };
+
+
+
+
+
+
+
+} //namespace
 
 //===----------------------------------------------------------------------===//
 // ToyToPoseidonLoweringPass

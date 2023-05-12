@@ -31,6 +31,11 @@ def Poseidon_Dialect : Dialect {
 // Base poseidon operation definition.
 //===----------------------------------------------------------------------===//
 
+// Base class for poseidon dialect operations. This operation inherits from 
+// the base `Op` class in OpBase.td, and provides:
+//   * The parent dialect of the operation.
+//   * The mnemonic for the operation, or the name without the dialect prefix.
+//   * A list of traits for the operation.
 class Poseidon_Op<string mnemonic, list<Trait> traits = []> :
         Op<Poseidon_Dialect, mnemonic, traits>;
 

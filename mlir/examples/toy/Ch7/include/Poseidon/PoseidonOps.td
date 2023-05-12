@@ -9,35 +9,68 @@
 #ifndef POSEIDON_OPS_TD
 #define POSEIDON_OPS_TD
 
-include "PoseidonDialect.td"
+include "Poseidon/PoseidonDialect.td"
 include "mlir/Interfaces/InferTypeOpInterface.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
+include "mlir/IR/FunctionInterfaces.td"
+include "mlir/IR/SymbolInterfaces.td"
+include "mlir/Interfaces/CallInterfaces.td"
+include "mlir/Interfaces/CastInterfaces.td"
 
-def Poseidon_FooOp : Poseidon_Op<"foo", [Pure,
-                                             SameOperandsAndResultType]> {
-    let summary = "Illustrates how to define an operation.";
+
+
+//===----------------------------------------------------------------------===//
+// Poseidon Operations
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+// ConstantOp
+//===----------------------------------------------------------------------===//
+
+def ConstantOp : Poseidon_Op<"constant", [ConstantLike, Pure]> {
+    // Provide a summary and description for this operation. This can be used to
+    // auto-generate documentation of the operations within our dialect.
+    let summary = "constant";
     let description = [{
-        The `poseidon.foo` operation illustrates how to define a new
-        operation in a dialect. It uses an operation trait to declare that it
-        has no side effects.
-
-        This operation takes an integer argument and returns an integer.
+        The `poseidon.constant` operation illustrates how to define a constant
+        operation in a dialect. Constant operation turns a literal into an 
+        SSA value. The data is attached to the operation as an attribute.
 
         Example:
 
         ```mlir
-        %0 = arith.constant 2 : i32
-        // Apply the foo operation to %0
-        %1 = poseidon.foo %0 : i32
+        %0 = poseidon.constant dense<[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]>
+                                : tensor<2x3xf64>
         ```
     }];
 
-    let arguments = (ins I32:$input);
-    let results = (outs I32:$res);
+    // The constant operation takes an attribute as the only input.
+    let arguments = (ins F64ElementsAttr:$value);
 
-    let assemblyFormat = [{
-        $input attr-dict `:` type($input)
-    }];
+    // The constant operation returns a single value of TensorType.
+    let results = (outs F64Tensor);
+
+    // Indicate that the operation has a custom parser and printer method.
+    // let hasCustomAssemblyFormat = 1;
+
+    // Add custom build methods for the constant operation. These method populates
+    // the `state` that MLIR uses to create operations, i.e. these are used when
+    // using `builder.create<ConstantOp>(...)`.
+    let builders = [
+        // Build a constant with a given constant tensor value.
+        OpBuilder<(ins "DenseElementsAttr":$value), [{
+        build($_builder, $_state, value.getType(), value);
+        }]>,
+
+        // Build a constant with a given constant floating-point value.
+        OpBuilder<(ins "double":$value)>
+    ];
+
+    // Indicate that additional verification for this operation is necessary.
+    // let hasVerifier = 1;
+
+    // Set the folder bit so that we can implement constant folders.
+    // let hasFolder = 1;
 }
 
 #endif // POSEIDON_OPS_TD

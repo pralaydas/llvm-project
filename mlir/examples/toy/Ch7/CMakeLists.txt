@@ -29,8 +29,10 @@ add_toy_chapter(toyc-ch7
   mlir/ShapeInferencePass.cpp
   mlir/ToyCombine.cpp
   mlir/LowerToPoseidon.cpp
-  lib/Dialect/Poseidon/PoseidonDialect.cpp
-  lib/Dialect/Poseidon/PoseidonOps.cpp
+  # lib/Dialect/Poseidon/PoseidonDialect.cpp
+  # lib/Dialect/Poseidon/PoseidonOps.cpp
+  mlir/PoseidonDialect.cpp
+  mlir/PoseidonOps.cpp
 
   DEPENDS
   ToyCh7ShapeInferenceInterfaceIncGen

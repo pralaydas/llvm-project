@@ -11,6 +11,9 @@
 
 #include "mlir/IR/Dialect.h"
 
+/// Include the auto-generated header file containing the declaration of the 
+/// poeidon dialect.
 #include "Poseidon/PoseidonDialect.h.inc"
+
 
 #endif // POSEIDON_POSEIDONDIALECT_H

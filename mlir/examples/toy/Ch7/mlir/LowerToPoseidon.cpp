@@ -30,6 +30,7 @@
 #include "Poseidon/PoseidonOps.h"
 #include "Poseidon/Passes.h"
 
+
 using namespace mlir;
 // using namespace poseidon;
 
@@ -83,6 +84,22 @@ struct FuncOpLowering : public OpConversionPattern<toy::FuncOp> {
         return success();
     }
 };
+
+
+//===----------------------------------------------------------------------===//
+// ToyToPoseidon RewritePatterns: Constant operations
+//===----------------------------------------------------------------------===//
+struct ConstantopLowering : public OpRewritePattern<toy::ConstantOp> {
+    using OpRewritePattern<toy::ConstantOp>::OpRewritePattern;
+
+    LogicalResult matchAndRewrite(toy::ConstantOp op,
+                                    PatternRewriter &rewriter) const override {
+
+        rewriter.replaceOpWithNewOp<poseidon::Constantop>(op, op.getType(), op.getValue());
+        return success();
+    }
+};
+
 
 //===----------------------------------------------------------------------===//
 // ToyToAffine RewritePatterns: Binary operations
@@ -151,7 +168,7 @@ void ToyToPoseidonLoweringPass::runOnOperation() {
     // Now that the conversion target has been defined, we just need to provide
     // the set of patterns that will lower the Toy operations.
     RewritePatternSet patterns(&getContext());
-    patterns.add<ReturnOpLowering, FuncOpLowering>(&getContext());
+    patterns.add<ConstantopLowering, ReturnOpLowering, FuncOpLowering>(&getContext());
 
     // With the target and rewrite patterns defined, we can now attempt the
     // conversion. The conversion will signal failure if any of our `illegal`

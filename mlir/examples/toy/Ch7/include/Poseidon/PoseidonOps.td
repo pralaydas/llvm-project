@@ -27,7 +27,7 @@ include "mlir/Interfaces/CastInterfaces.td"
 // ConstantOp
 //===----------------------------------------------------------------------===//
 
-def ConstantOp : Poseidon_Op<"constant", [ConstantLike, Pure]> {
+def Constantop : Poseidon_Op<"constant_", [ConstantLike, Pure]> {
     // Provide a summary and description for this operation. This can be used to
     // auto-generate documentation of the operations within our dialect.
     let summary = "constant";
@@ -51,7 +51,7 @@ def ConstantOp : Poseidon_Op<"constant", [ConstantLike, Pure]> {
     let results = (outs F64Tensor);
 
     // Indicate that the operation has a custom parser and printer method.
-    // let hasCustomAssemblyFormat = 1;
+    let hasCustomAssemblyFormat = 1;
 
     // Add custom build methods for the constant operation. These method populates
     // the `state` that MLIR uses to create operations, i.e. these are used when
@@ -63,14 +63,24 @@ def ConstantOp : Poseidon_Op<"constant", [ConstantLike, Pure]> {
         }]>,
 
         // Build a constant with a given constant floating-point value.
-        OpBuilder<(ins "double":$value)>
+        // OpBuilder<(ins "double":$value)>
     ];
 
     // Indicate that additional verification for this operation is necessary.
-    // let hasVerifier = 1;
+    let hasVerifier = 1;
 
     // Set the folder bit so that we can implement constant folders.
     // let hasFolder = 1;
+    let extraClassDeclaration = [{
+    /// Whether the constant op can be constructed with a particular value and
+    /// type.
+    static bool isBuildableWith(Attribute value, Type type);
+
+    /// Build the constant op with `value` and `type` if possible, otherwise
+    /// returns null.
+    static Constantop materialize(OpBuilder &builder, Attribute value,
+                                  Type type, Location loc);
+    }];
 }
 
 #endif // POSEIDON_OPS_TD

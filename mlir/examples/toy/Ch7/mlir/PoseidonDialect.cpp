@@ -18,25 +18,22 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Poseidon/PoseidonDialect.h"
+
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinTypes.h"
 #include "mlir/IR/DialectImplementation.h"
 #include "mlir/IR/MLIRContext.h"
 #include "mlir/IR/Operation.h"
 #include "mlir/IR/OperationSupport.h"
-#include "llvm/ADT/TypeSwitch.h"
-#include "llvm/AsmParser/Parser.h"
-#include "llvm/IR/Attributes.h"
-#include "llvm/IR/Function.h"
-#include "llvm/IR/Type.h"
-#include "llvm/Support/SourceMgr.h"
+#include "mlir/IR/OpImplementation.h"
 #include "mlir/Transforms/InliningUtils.h"
 
 #include "Poseidon/PoseidonDialect.h"
 #include "Poseidon/PoseidonOps.h"
 
 using namespace mlir;
-using namespace poseidon;
+using namespace mlir::poseidon;
 
 #include "Poseidon/PoseidonDialect.cpp.inc"
 
@@ -55,12 +52,19 @@ struct PoseidonInlinerInterface : public DialectInlinerInterface {
                        IRMapping &) const final {
     return true;
   }
-  bool isLegalToInline(Region *dest, Region *src, bool wouldBeCloned,
-                       IRMapping &valueMapping) const final {
+  bool isLegalToInline(Region *, Region *, bool ,
+                       IRMapping &) const final {
     return true;
   }
 };
 } // namespace
+
+//===----------------------------------------------------------------------===//
+// TableGen'd op method definitions
+//===----------------------------------------------------------------------===//
+
+#define GET_OP_CLASSES
+#include "Poseidon/PoseidonOps.cpp.inc"
 
 //===----------------------------------------------------------------------===//
 // Poseidon dialect.
@@ -72,4 +76,12 @@ void PoseidonDialect::initialize() {
 #include "Poseidon/PoseidonOps.cpp.inc"
       >();
   addInterfaces<PoseidonInlinerInterface>();
+}
+
+mlir::Operation *PoseidonDialect::materializeConstant(mlir::OpBuilder &builder,
+                                                 mlir::Attribute value,
+                                                 mlir::Type type,
+                                                 mlir::Location loc) {
+  return builder.create<Constantop>(loc, type,
+                                    value.cast<mlir::DenseElementsAttr>());
 }

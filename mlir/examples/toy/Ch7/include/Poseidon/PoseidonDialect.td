@@ -25,6 +25,8 @@ def Poseidon_Dialect : Dialect {
     }];
     let cppNamespace = "::mlir::poseidon";
     let useFoldAPI = kEmitFoldAdaptorFolder;
+    // let useDefaultTypePrinterParser = 1;
+    let hasConstantMaterializer = 1;
 }
 
 //===----------------------------------------------------------------------===//

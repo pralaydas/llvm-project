@@ -27,7 +27,7 @@ include "mlir/Interfaces/CastInterfaces.td"
 // ConstantOp
 //===----------------------------------------------------------------------===//
 
-def Constantop : Poseidon_Op<"constant_", [ConstantLike, Pure]> {
+def Constantop : Poseidon_Op<"constant", [ConstantLike, Pure]> {
     // Provide a summary and description for this operation. This can be used to
     // auto-generate documentation of the operations within our dialect.
     let summary = "constant";
@@ -71,16 +71,47 @@ def Constantop : Poseidon_Op<"constant_", [ConstantLike, Pure]> {
 
     // Set the folder bit so that we can implement constant folders.
     // let hasFolder = 1;
-    let extraClassDeclaration = [{
-    /// Whether the constant op can be constructed with a particular value and
-    /// type.
-    static bool isBuildableWith(Attribute value, Type type);
+    // let extraClassDeclaration = [{
+    // /// Whether the constant op can be constructed with a particular value and
+    // /// type.
+    // static bool isBuildableWith(Attribute value, Type type);
 
-    /// Build the constant op with `value` and `type` if possible, otherwise
-    /// returns null.
-    static Constantop materialize(OpBuilder &builder, Attribute value,
-                                  Type type, Location loc);
-    }];
+    // /// Build the constant op with `value` and `type` if possible, otherwise
+    // /// returns null.
+    // static Constantop materialize(OpBuilder &builder, Attribute value,
+    //                               Type type, Location loc);
+    // }];
 }
+
+
+//===----------------------------------------------------------------------===//
+// AddOp
+//===----------------------------------------------------------------------===//
+
+def Addop : Poseidon_Op<"add", [Pure, Commutative]>{
+    let summary = "element-wise addition operation";
+    let description = [{
+        The 'poseidon.add' operation performs element-wise addition between two tensors.
+        The shapes of the tensor operands are expected to match.
+        Example:
+
+        ```mlir
+        %2 = poseidon.add (%0, %1) : (tensor<6xf64>, tensor<6xf64>) -> tensor<*xf64>
+        ```
+    }];
+    let arguments = (ins F64Tensor:$lhs, F64Tensor:$rhs);
+    let results = (outs F64Tensor);
+
+    // Indicate that the operation has a custom parser and printer method.
+    let hasCustomAssemblyFormat = 1;
+
+    // Allow building an AddOp with from the two input operands.
+    let builders = [
+        OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+    ];
+    
+
+}
+
 
 #endif // POSEIDON_OPS_TD

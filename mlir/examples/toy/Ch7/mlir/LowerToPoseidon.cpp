@@ -104,19 +104,16 @@ struct ConstantopLowering : public OpRewritePattern<toy::ConstantOp> {
 //===----------------------------------------------------------------------===//
 // ToyToAffine RewritePatterns: Binary operations
 //===----------------------------------------------------------------------===//
-// template <typename BinaryOp, typename LoweredBinaryOp>
-// struct BinaryOpLowering : public ConversionPattern {
-//     BinaryOpLowering(MLIRCoontext *ctx)
-//         : ConversionPattern(BinaryOp::getOperationName(), 1, ctx) {}
+struct AddopLowering : public OpRewritePattern<toy::AddOp> {
+    using OpRewritePattern<toy::AddOp>::OpRewritePattern;
 
-//     LogicalResult matchRewrite(Operation *op, ArrayRef<Value> operands,
-//                             CoonversionPatternRewriter &rewriter) const final{
-        
-//     }
-// };
+    LogicalResult matchAndRewrite(toy::AddOp op,
+                                    PatternRewriter &rewriter) const override {
 
-
-
+        rewriter.replaceOpWithNewOp<poseidon::Addop>(op, op.getOperand(0), op.getOperand(1));
+        return success();
+    }
+};
 
 
 
@@ -168,7 +165,9 @@ void ToyToPoseidonLoweringPass::runOnOperation() {
     // Now that the conversion target has been defined, we just need to provide
     // the set of patterns that will lower the Toy operations.
     RewritePatternSet patterns(&getContext());
-    patterns.add<ConstantopLowering, ReturnOpLowering, FuncOpLowering>(&getContext());
+    patterns.add<ConstantopLowering, ReturnOpLowering, FuncOpLowering,
+                    AddopLowering>(
+        &getContext());
 
     // With the target and rewrite patterns defined, we can now attempt the
     // conversion. The conversion will signal failure if any of our `illegal`

@@ -35,6 +35,61 @@ using namespace poseidon;
 // #include "Poseidon/PoseidonDialect.cpp.inc"
 #include "Poseidon/PoseidonOps.cpp.inc"
 
+
+//===----------------------------------------------------------------------===//
+// Poseidon Operations
+//===----------------------------------------------------------------------===//
+
+/// A generalized parser for binary operations. This parses the different forms
+/// of 'printBinaryOp' below.
+static mlir::ParseResult parseBinaryOp(mlir::OpAsmParser &parser,
+                                       mlir::OperationState &result) {
+  SmallVector<mlir::OpAsmParser::UnresolvedOperand, 2> operands;
+  SMLoc operandsLoc = parser.getCurrentLocation();
+  Type type;
+  if (parser.parseOperandList(operands, /*requiredOperandCount=*/2) ||
+      parser.parseOptionalAttrDict(result.attributes) ||
+      parser.parseColonType(type))
+    return mlir::failure();
+
+  // If the type is a function type, it contains the input and result types of
+  // this operation.
+  if (FunctionType funcType = type.dyn_cast<FunctionType>()) {
+    if (parser.resolveOperands(operands, funcType.getInputs(), operandsLoc,
+                               result.operands))
+      return mlir::failure();
+    result.addTypes(funcType.getResults());
+    return mlir::success();
+  }
+
+  // Otherwise, the parsed type is the type of both operands and results.
+  if (parser.resolveOperands(operands, type, result.operands))
+    return mlir::failure();
+  result.addTypes(type);
+  return mlir::success();
+}
+
+/// A generalized printer for binary operations. It prints in two different
+/// forms depending on if all of the types match.
+static void printBinaryOp(mlir::OpAsmPrinter &printer, mlir::Operation *op) {
+  printer << " " << op->getOperands();
+  printer.printOptionalAttrDict(op->getAttrs());
+  printer << " : ";
+
+  // If all of the types are the same, print the type directly.
+  Type resultType = *op->result_type_begin();
+  if (llvm::all_of(op->getOperandTypes(),
+                   [=](Type type) { return type == resultType; })) {
+    printer << resultType;
+    return;
+  }
+
+  // Otherwise, print a functional type.
+  printer.printFunctionalType(op->getOperandTypes(), op->getResultTypes());
+}
+
+
+
 //===----------------------------------------------------------------------===//
 // ConstantOp
 //===----------------------------------------------------------------------===//
@@ -142,3 +197,21 @@ mlir::LogicalResult Constantop::verify() {
 /// Infer the output shape of the ConstantOp, this is required by the shape
 /// inference interface.
 // void ConstantOp::inferShapes() { getResult().setType(getValue().getType()); }
+
+
+//===----------------------------------------------------------------------===//
+// AddOp
+//===----------------------------------------------------------------------===//
+
+void Addop::build(mlir::OpBuilder &builder, mlir::OperationState &state,
+                  mlir::Value lhs, mlir::Value rhs) {
+  state.addTypes(UnrankedTensorType::get(builder.getF64Type()));
+  state.addOperands({lhs, rhs});
+}
+
+mlir::ParseResult Addop::parse(mlir::OpAsmParser &parser,
+                               mlir::OperationState &result) {
+  return parseBinaryOp(parser, result);
+}
+
+void Addop::print(mlir::OpAsmPrinter &p) { printBinaryOp(p, *this); }

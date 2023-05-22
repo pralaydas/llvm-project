@@ -28,7 +28,9 @@ add_toy_chapter(toyc-ch7
   mlir/LowerToLLVM.cpp
   mlir/ShapeInferencePass.cpp
   mlir/ToyCombine.cpp
+  # /************************* include for poseidon ***************/
   mlir/LowerToPoseidon.cpp
+  mlir/LowerToPoseidonLoops.cpp
   # lib/Dialect/Poseidon/PoseidonDialect.cpp
   # lib/Dialect/Poseidon/PoseidonOps.cpp
   mlir/PoseidonDialect.cpp

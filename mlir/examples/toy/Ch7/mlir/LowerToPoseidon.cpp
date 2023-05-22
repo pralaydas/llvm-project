@@ -1,4 +1,4 @@
-//====- LowerToPoseidon.cpp - Partial lowering from Toy to Affine+Std --===//
+//====- LowerToPoseidon.cpp - Partial lowering from Toy to Poseidon --===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -33,6 +33,31 @@
 
 using namespace mlir;
 // using namespace poseidon;
+//===----------------------------------------------------------------------===//
+// TensorToMemref RewritePatterns
+//===----------------------------------------------------------------------===//
+
+/// Convert the given TensorType into the corresponding MemRefType.
+static MemRefType convertTensorToMemRef(TensorType type) {
+  assert(type.hasRank() && "expected only ranked shapes");
+  return MemRefType::get(type.getShape(), type.getElementType());
+}
+
+/// Insert an allocation and deallocation for the given MemRefType.
+static Value insertAllocAndDealloc(MemRefType type, Location loc,
+                                   PatternRewriter &rewriter) {
+  auto alloc = rewriter.create<memref::AllocOp>(loc, type);
+
+  // Make sure to allocate at the beginning of the block.
+  auto *parentBlock = alloc->getBlock();
+  alloc->moveBefore(&parentBlock->front());
+
+  // Make sure to deallocate this alloc at the end of the block. This is fine
+  // as toy functions have no control flow.
+  auto dealloc = rewriter.create<memref::DeallocOp>(loc, alloc);
+  dealloc->moveBefore(&parentBlock->back());
+  return alloc;
+}
 
 namespace {
 //===----------------------------------------------------------------------===//
@@ -95,7 +120,13 @@ struct ConstantopLowering : public OpRewritePattern<toy::ConstantOp> {
     LogicalResult matchAndRewrite(toy::ConstantOp op,
                                     PatternRewriter &rewriter) const override {
 
+        // Location loc = op.getLoc();
+        // auto tensorType = op.getType().cast<TensorType>();
+        // auto memRefType = convertTensorToMemRef(tensorType);
+        // auto alloc = insertAllocAndDealloc(memRefType, loc, rewriter);
+        // rewriter.replaceOp(op, alloc);
         rewriter.replaceOpWithNewOp<poseidon::Constantop>(op, op.getType(), op.getValue());
+        
         return success();
     }
 };
@@ -109,8 +140,13 @@ struct AddopLowering : public OpRewritePattern<toy::AddOp> {
 
     LogicalResult matchAndRewrite(toy::AddOp op,
                                     PatternRewriter &rewriter) const override {
-
+        // Location loc = op.getLoc();
+        // auto tensorType = op.getType().cast<TensorType>();
+        // auto memRefType = convertTensorToMemRef(tensorType);
+        // auto alloc = insertAllocAndDealloc(memRefType, loc, rewriter);
+        // rewriter.replaceOp(op,alloc);
         rewriter.replaceOpWithNewOp<poseidon::Addop>(op, op.getOperand(0), op.getOperand(1));
+        
         return success();
     }
 };
@@ -135,7 +171,7 @@ struct ToyToPoseidonLoweringPass
 
         void getDependentDialects(DialectRegistry &registry) const override {
             registry.insert<poseidon::PoseidonDialect>();
-            registry.insert<func::FuncDialect>();
+            registry.insert<func::FuncDialect, memref::MemRefDialect>();
         }
         void runOnOperation() override;
 };
@@ -148,7 +184,7 @@ void ToyToPoseidonLoweringPass::runOnOperation() {
     
     // We define the specific operations, or dialects, that are legal targets for
     // this lowering. In our case, we are lowering to our custom Poseidon dialect.
-    target.addLegalDialect<poseidon::PoseidonDialect, func::FuncDialect>();
+    target.addLegalDialect<poseidon::PoseidonDialect, func::FuncDialect, memref::MemRefDialect>();
 
     // We also define the Toy dialect as Illegal so that the conversion will fail
     // if any of these operations are *not* converted. Given that we actually want

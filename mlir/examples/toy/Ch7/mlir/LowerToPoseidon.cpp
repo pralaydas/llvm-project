@@ -33,38 +33,14 @@
 
 using namespace mlir;
 // using namespace poseidon;
-//===----------------------------------------------------------------------===//
-// TensorToMemref RewritePatterns
-//===----------------------------------------------------------------------===//
 
-/// Convert the given TensorType into the corresponding MemRefType.
-static MemRefType convertTensorToMemRef(TensorType type) {
-  assert(type.hasRank() && "expected only ranked shapes");
-  return MemRefType::get(type.getShape(), type.getElementType());
-}
-
-/// Insert an allocation and deallocation for the given MemRefType.
-static Value insertAllocAndDealloc(MemRefType type, Location loc,
-                                   PatternRewriter &rewriter) {
-  auto alloc = rewriter.create<memref::AllocOp>(loc, type);
-
-  // Make sure to allocate at the beginning of the block.
-  auto *parentBlock = alloc->getBlock();
-  alloc->moveBefore(&parentBlock->front());
-
-  // Make sure to deallocate this alloc at the end of the block. This is fine
-  // as toy functions have no control flow.
-  auto dealloc = rewriter.create<memref::DeallocOp>(loc, alloc);
-  dealloc->moveBefore(&parentBlock->back());
-  return alloc;
-}
 
 namespace {
 //===----------------------------------------------------------------------===//
 // ToyToPoseidon RewritePatterns: Return operations
 //===----------------------------------------------------------------------===//
 
-struct ReturnOpLowering : public OpRewritePattern<toy::ReturnOp> {
+struct ReturnopLowering : public OpRewritePattern<toy::ReturnOp> {
     using OpRewritePattern<toy::ReturnOp>::OpRewritePattern;
 
     LogicalResult matchAndRewrite(toy::ReturnOp op,
@@ -84,7 +60,7 @@ struct ReturnOpLowering : public OpRewritePattern<toy::ReturnOp> {
 // ToyToPoseidon RewritePatterns: Func operations
 //===----------------------------------------------------------------------===//
 
-struct FuncOpLowering : public OpConversionPattern<toy::FuncOp> {
+struct FuncopLowering : public OpConversionPattern<toy::FuncOp> {
     using OpConversionPattern<toy::FuncOp>::OpConversionPattern;
 
     
@@ -151,7 +127,23 @@ struct AddopLowering : public OpRewritePattern<toy::AddOp> {
     }
 };
 
+//===----------------------------------------------------------------------===//
+// ToyToPoseidon RewritePatterns: Print operations
+//===----------------------------------------------------------------------===//
 
+struct PrintOpLowering : public OpConversionPattern<toy::PrintOp> {
+  using OpConversionPattern<toy::PrintOp>::OpConversionPattern;
+
+  
+  LogicalResult matchAndRewrite(toy::PrintOp op, OpAdaptor adaptor,
+                  ConversionPatternRewriter &rewriter) const final {
+    // We don't lower "toy.print" in this pass, but we need to update its
+    // operands.
+    rewriter.updateRootInPlace(op,
+                               [&] { op->setOperands(adaptor.getOperands()); });
+    return success();
+  }
+};
 
 
 } //namespace
@@ -171,7 +163,7 @@ struct ToyToPoseidonLoweringPass
 
         void getDependentDialects(DialectRegistry &registry) const override {
             registry.insert<poseidon::PoseidonDialect>();
-            registry.insert<func::FuncDialect, memref::MemRefDialect>();
+            registry.insert<AffineDialect, func::FuncDialect, memref::MemRefDialect>();
         }
         void runOnOperation() override;
 };
@@ -184,7 +176,10 @@ void ToyToPoseidonLoweringPass::runOnOperation() {
     
     // We define the specific operations, or dialects, that are legal targets for
     // this lowering. In our case, we are lowering to our custom Poseidon dialect.
-    target.addLegalDialect<poseidon::PoseidonDialect, func::FuncDialect, memref::MemRefDialect>();
+    target.addLegalDialect<poseidon::PoseidonDialect, 
+            func::FuncDialect, 
+            memref::MemRefDialect,
+            AffineDialect, BuiltinDialect, arith::ArithDialect>();
 
     // We also define the Toy dialect as Illegal so that the conversion will fail
     // if any of these operations are *not* converted. Given that we actually want
@@ -193,17 +188,16 @@ void ToyToPoseidonLoweringPass::runOnOperation() {
     // to be updated though (as we convert from TensorType to MemRefType), so we
     // only treat it as `legal` if its operands are legal.
     target.addIllegalDialect<toy::ToyDialect>();
-    target.addDynamicallyLegalOp<toy::PrintOp>([](toy::PrintOp op){
+    target.addDynamicallyLegalOp<toy::PrintOp>([](toy::PrintOp op) {
         return llvm::none_of(op->getOperandTypes(),
-                            [](Type type){ return type.isa<TensorType>(); });
+                            [](Type type) { return type.isa<TensorType>(); });
     });
 
     // Now that the conversion target has been defined, we just need to provide
     // the set of patterns that will lower the Toy operations.
     RewritePatternSet patterns(&getContext());
-    patterns.add<ConstantopLowering, ReturnOpLowering, FuncOpLowering,
-                    AddopLowering>(
-        &getContext());
+    patterns.add<ConstantopLowering, ReturnopLowering, FuncopLowering,
+                    AddopLowering, PrintOpLowering >(&getContext());
 
     // With the target and rewrite patterns defined, we can now attempt the
     // conversion. The conversion will signal failure if any of our `illegal`

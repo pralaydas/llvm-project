@@ -107,8 +107,7 @@ struct BinaryOpLowering : public ConversionPattern {
   BinaryOpLowering(MLIRContext *ctx)
       : ConversionPattern(BinaryOp::getOperationName(), 1, ctx) {}
 
-  LogicalResult
-  matchAndRewrite(Operation *op, ArrayRef<Value> operands,
+  LogicalResult matchAndRewrite(Operation *op, ArrayRef<Value> operands,
                   ConversionPatternRewriter &rewriter) const final {
     auto loc = op->getLoc();
     lowerOpToLoops(op, operands, rewriter,
@@ -134,7 +133,8 @@ struct BinaryOpLowering : public ConversionPattern {
     return success();
   }
 };
-using AddOpLowering = BinaryOpLowering<toy::AddOp, poseidon::Addop>;
+// using AddOpLowering = BinaryOpLowering<toy::AddOp, poseidon::Addop>;
+using AddOpLowering = BinaryOpLowering<toy::AddOp, arith::AddFOp>;
 // using MulOpLowering = BinaryOpLowering<toy::MulOp, arith::MulFOp>;
 
 //===----------------------------------------------------------------------===//
@@ -163,10 +163,11 @@ struct ConstantOpLowering : public OpRewritePattern<toy::ConstantOp> {
     
     rewriter.create<memref::TensorStoreOp>(
       loc, 
-      rewriter.replaceOpWithNewOp<poseidon::Constantop>(op, tensorType, constantValue),
+      // rewriter.replaceOpWithNewOp<poseidon::Constantop>(op, tensorType, constantValue),
+      rewriter.create<poseidon::Constantop>(loc, constantValue),
       alloc);
 
-    // rewriter.replaceOp(op, alloc);
+    rewriter.replaceOp(op, alloc);
     return success();
   }
 };
@@ -209,8 +210,8 @@ struct FuncOpLowering : public OpConversionPattern<toy::FuncOp> {
 struct PrintOpLowering : public OpConversionPattern<toy::PrintOp> {
   using OpConversionPattern<toy::PrintOp>::OpConversionPattern;
 
-  LogicalResult
-  matchAndRewrite(toy::PrintOp op, OpAdaptor adaptor,
+  
+  LogicalResult matchAndRewrite(toy::PrintOp op, OpAdaptor adaptor,
                   ConversionPatternRewriter &rewriter) const final {
     // We don't lower "toy.print" in this pass, but we need to update its
     // operands.
@@ -257,7 +258,7 @@ struct ToyToPoseidonLoopsLoweringPass
 
   void getDependentDialects(DialectRegistry &registry) const override {
     registry.insert<poseidon::PoseidonDialect, func::FuncDialect, memref::MemRefDialect, 
-                    AffineDialect>();
+                    arith::ArithDialect, AffineDialect>();
   }
   void runOnOperation() override;
 };
@@ -272,7 +273,7 @@ void ToyToPoseidonLoopsLoweringPass::runOnOperation() {
   // this lowering. In our case, we are lowering to a combination of the
   // `poseidon`, `Func`, and `MemRef` dialects.
   target.addLegalDialect<poseidon::PoseidonDialect, AffineDialect, BuiltinDialect,
-                         func::FuncDialect, memref::MemRefDialect>();
+                         arith::ArithDialect, func::FuncDialect, memref::MemRefDialect>();
 
   // We also define the Toy dialect as Illegal so that the conversion will fail
   // if any of these operations are *not* converted. Given that we actually want
@@ -289,9 +290,8 @@ void ToyToPoseidonLoopsLoweringPass::runOnOperation() {
   // Now that the conversion target has been defined, we just need to provide
   // the set of patterns that will lower the Toy operations.
   RewritePatternSet patterns(&getContext());
-  patterns.add< FuncOpLowering, ReturnOpLowering,
-                ConstantOpLowering
-                >(&getContext());
+  patterns.add< AddOpLowering, ConstantOpLowering,FuncOpLowering, ReturnOpLowering,
+                 PrintOpLowering >(&getContext());
 
   // With the target and rewrite patterns defined, we can now attempt the
   // conversion. The conversion will signal failure if any of our `illegal`

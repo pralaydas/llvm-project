@@ -196,7 +196,7 @@ mlir::LogicalResult Constantop::verify() {
 
 /// Infer the output shape of the ConstantOp, this is required by the shape
 /// inference interface.
-// void ConstantOp::inferShapes() { getResult().setType(getValue().getType()); }
+// void Constantop::inferShapes() { getResult().setType(getValue().getType()); }
 
 
 //===----------------------------------------------------------------------===//
@@ -215,3 +215,7 @@ mlir::ParseResult Addop::parse(mlir::OpAsmParser &parser,
 }
 
 void Addop::print(mlir::OpAsmPrinter &p) { printBinaryOp(p, *this); }
+
+/// Infer the output shape of the AddOp, this is required by the shape inference
+/// interface.
+// void Addop::inferShapes() { getResult().setType(getOperand(0).getType()); }

@@ -247,7 +247,7 @@ using namespace vector;
 ///     loops that have a. conformable loop annotations attached (e.g. parallel,
 ///     reduction, vectorizable, ...) as well as b. all contiguous load/store
 ///     operations along a specified minor dimension (not necessarily the
-///     fastest varying) ;
+///     fastest varying) ; 
 ///  2. analyzing those patterns for profitability (TODO: and
 ///     interference);
 ///  3. then, for each pattern in order:

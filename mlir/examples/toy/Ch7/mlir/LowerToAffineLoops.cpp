@@ -64,8 +64,6 @@ static void lowerOpToLoops(Operation *op, ValueRange operands,
                            PatternRewriter &rewriter,
                            LoopIterationFn processIteration) {
   auto tensorType = (*op->result_type_begin()).cast<TensorType>();
-  llvm::errs()<<"I think shape inference pass include here\n";
-  llvm::errs()<<tensorType<<"\n";
   auto loc = op->getLoc();
 
   // Insert an allocation and deallocation for the result of this operation.

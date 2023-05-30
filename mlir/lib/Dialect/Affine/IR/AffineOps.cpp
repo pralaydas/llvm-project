@@ -2377,8 +2377,19 @@ static void buildAffineLoopNestImpl(
 
     // Delegate actual loop creation to the callback in order to dispatch
     // between constant- and variable-bound loops.
-    auto loop = loopCreatorFn(builder, loc, lbs[i], ubs[i], steps[i], loopBody);
-    builder.setInsertionPointToStart(loop.getBody());
+    
+    // do step size =4 in the inner most loop
+    // this is a temporary solution for variable step size
+    if(i==e-1){
+      auto loop = loopCreatorFn(builder, loc, lbs[i], ubs[i], 4, loopBody);
+      builder.setInsertionPointToStart(loop.getBody());
+    }else{
+        auto loop = loopCreatorFn(builder, loc, lbs[i], ubs[i], steps[i], loopBody);
+        builder.setInsertionPointToStart(loop.getBody());
+    }
+    // auto loop = loopCreatorFn(builder, loc, lbs[i], ubs[i], 4, loopBody);
+    // builder.setInsertionPointToStart(loop.getBody());
+
   }
 }
 

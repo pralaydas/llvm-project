@@ -39,6 +39,6 @@ def Poseidon_Dialect : Dialect {
 //   * The mnemonic for the operation, or the name without the dialect prefix.
 //   * A list of traits for the operation.
 class Poseidon_Op<string mnemonic, list<Trait> traits = []> :
-        Op<Poseidon_Dialect, mnemonic, traits>;
+        Op<Poseidon_Dialect, mnemonic, traits >;
 
 #endif // POSEIDON_DIALECT_TD

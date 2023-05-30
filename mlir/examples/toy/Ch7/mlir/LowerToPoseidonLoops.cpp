@@ -90,9 +90,10 @@ static void lowerOpToLoops(Operation *op, ValueRange operands,
   // the body of the innermost loop given a builder, a location and a range of
   // loop induction variables.
   SmallVector<int64_t, 4> lowerBounds(tensorType.getRank(), /*Value=*/0);
-  SmallVector<int64_t, 4> steps(tensorType.getRank(), /*Value=*/2);
+  SmallVector<int64_t, 4> steps(tensorType.getRank(), /*Value=*/1);
   // ArrayRef<int64_t> steps(tensorType.getRank(), 1);
-  llvm::errs()<<tensorType.getRank()<<"\n";
+  // llvm::errs()<<tensorType.getRank()<<"\n";
+  // llvm::errs() <<tensorType.getShape() <<"\n";
   buildAffineLoopNest(
       rewriter, loc, lowerBounds, tensorType.getShape(), steps,
       [&](OpBuilder &nestedBuilder, Location loc, ValueRange ivs) {
@@ -100,8 +101,7 @@ static void lowerOpToLoops(Operation *op, ValueRange operands,
         // and the loop induction variables. This function will return the value
         // to store at the current index.
         
-        Value valueToStore = processIteration(nestedBuilder, operands, ivs);
-        
+        auto valueToStore = processIteration(nestedBuilder, operands, ivs);
         // nestedBuilder.create<AffineStoreOp>(loc, valueToStore, alloc, ivs);
         nestedBuilder.create<AffineVectorStoreOp>(loc, valueToStore, alloc, ivs);
       });
@@ -157,14 +157,15 @@ struct BinaryOpLowering : public ConversionPattern {
                     //     loc, binaryAdaptor.getRhs(),loopIvs);
                      // Create the binary operation performed on the loaded
                      // values.
-                     return builder.create<LoweredBinaryOp>(loc, loadedLhs,
+                     
+                     return builder.create<LoweredBinaryOp>(loc, vecType, loadedLhs,
                                                             loadedRhs);
                    });
     return success();
   }
 };
-// using AddOpLowering = BinaryOpLowering<toy::AddOp, poseidon::Addop>;
-using AddOpLowering = BinaryOpLowering<toy::AddOp, arith::AddFOp>;
+using AddOpLowering = BinaryOpLowering<toy::AddOp, poseidon::Addop>;
+// using AddOpLowering = BinaryOpLowering<toy::AddOp, arith::AddFOp>;
 // using MulOpLowering = BinaryOpLowering<toy::MulOp, arith::MulFOp>;
 
 

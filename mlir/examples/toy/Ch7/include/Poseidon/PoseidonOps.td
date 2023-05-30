@@ -99,8 +99,8 @@ def Addop : Poseidon_Op<"add", [Pure, Commutative]>{
         %2 = poseidon.add (%0, %1) : (tensor<6xf64>, tensor<6xf64>) -> tensor<*xf64>
         ```
     }];
-    let arguments = (ins AnyType:$lhs, AnyType:$rhs);
-    let results = (outs AnyType);
+    let arguments = (ins AnyVector:$lhs, AnyVector:$rhs);
+    let results = (outs AnyVector:$result);
 
     // Indicate that the operation has a custom parser and printer method.
     let hasCustomAssemblyFormat = 1;

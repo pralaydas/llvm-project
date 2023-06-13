@@ -36,6 +36,7 @@
 #include "Poseidon/PoseidonOps.h"
 #include "Poseidon/Passes.h"
 #include "mlir/Dialect/Vector/IR/VectorOps.h"
+#include "mlir/Dialect/Bufferization/Transforms/Bufferize.h"
 using namespace mlir;
 
 
@@ -319,36 +320,135 @@ struct AddOPLowering : public LowerOp<toy::AddOp> {
 // ToyToAffine RewritePatterns: Constant operations
 //===----------------------------------------------------------------------===//
 
-struct ConstantOpLowering : public OpRewritePattern<toy::ConstantOp> {
-  using OpRewritePattern<toy::ConstantOp>::OpRewritePattern;
+// struct ConstantOpLowering : public OpRewritePattern<toy::ConstantOp> {
+//   using OpRewritePattern<toy::ConstantOp>::OpRewritePattern;
 
-  LogicalResult matchAndRewrite(toy::ConstantOp op,
-                                PatternRewriter &rewriter) const final {
-    DenseElementsAttr constantValue = op.getValue();
-    Location loc = op.getLoc();
+//   LogicalResult matchAndRewrite(toy::ConstantOp op,
+//                                 PatternRewriter &rewriter) const override {
+    
+//     DenseElementsAttr constantValue = op.getValue();
+//     Location loc = op.getLoc();
 
-    // When lowering the constant operation, we allocate and assign the constant
-    // values to a corresponding memref allocation.
-    auto tensorType = op.getType().cast<TensorType>();
+//     // When lowering the constant operation, we allocate and assign the constant
+//     // values to a corresponding memref allocation.
+//     auto tensorType = op.getType().cast<TensorType>();
+//     auto memRefType = convertTensorToMemRef(tensorType);
+//     auto alloc = insertAllocAndDealloc(memRefType, loc, rewriter);
+    
+    
+
+//     // Value newOp = rewriter.create<poseidon::Constantop>(op, memRefType, op.getValue());
+//     // rewriter.replaceOpWithNewOp<poseidon::Constantop>(op, memRefType, op.getValue());
+//     // rewriter.replaceOpWithNewOp<poseidon::Constantop>(op, memRefType, constantValue);
+    
+//     rewriter.create<memref::TensorStoreOp>(
+//       loc, 
+//       // rewriter.replaceOpWithNewOp<poseidon::Constantop>(op, tensorType, constantValue),
+//       rewriter.create<poseidon::Constantop>(loc, constantValue),
+//       alloc);
+
+//     rewriter.replaceOp(op, alloc);
+//     return success();
+//   }
+// };
+
+class ConstantOpLowering : public ConversionPattern {
+public:
+  ConstantOpLowering(MLIRContext *context)
+      : ConversionPattern(toy::ConstantOp::getOperationName(), 1, context) {}
+
+  LogicalResult
+  matchAndRewrite(Operation *op, ArrayRef<Value> operands,
+                  ConversionPatternRewriter &rewriter) const override {
+    
+    
+    auto loc = op->getLoc();
+    auto tensorType = (*op->result_type_begin()).cast<TensorType>();
     auto memRefType = convertTensorToMemRef(tensorType);
-    auto alloc = insertAllocAndDealloc(memRefType, loc, rewriter);
     
+    auto constantOp = cast<toy::ConstantOp>(op);
     
 
-    // Value newOp = rewriter.create<poseidon::Constantop>(op, memRefType, op.getValue());
-    // rewriter.replaceOpWithNewOp<poseidon::Constantop>(op, memRefType, op.getValue());
-    // rewriter.replaceOpWithNewOp<poseidon::Constantop>(op, memRefType, constantValue);
+    // Get the tensor attribute from the toy.constant operation.
+    DenseElementsAttr tensorAttr = constantOp.getValue();
     
-    rewriter.create<memref::TensorStoreOp>(
-      loc, 
-      // rewriter.replaceOpWithNewOp<poseidon::Constantop>(op, tensorType, constantValue),
-      rewriter.create<poseidon::Constantop>(loc, constantValue),
-      alloc);
+    
+    auto attrValue = op->getAttrs();
+    
+    ModuleOp parentModule = op->getParentOfType<ModuleOp>();
+    auto *context = parentModule.getContext();
 
-    rewriter.replaceOp(op, alloc);
+    mlir::OpBuilder::InsertionGuard insertGuard(rewriter);
+    
+    rewriter.setInsertionPointToStart(parentModule.getBody());
+
+    auto type = op->getOperands().getTypes();
+
+    auto globalop = rewriter.create<memref::GlobalOp>(
+          loc, 
+          mlir::StringAttr::get(context, "__constant"),
+          nullptr,
+          mlir::TypeAttr::get(memRefType),
+          tensorAttr,
+          mlir::UnitAttr::get(context),
+          nullptr);
+    
+    
+    // TypeRange range({memRefType});
+    // ValueRange value(operands);
+    
+    // llvm::errs()<<"&&&&&&&&&&&&&\n";
+
+    // auto globalop = rewriter.create<memref::GlobalOp>(loc, range, value, attrValue);
+    llvm::errs()<<"***********************\n";
+    llvm::errs()<<globalop<<"\n";
+    llvm::errs()<<"***********************\n";
+    auto getglobalop = rewriter.create<memref::GetGlobalOp>(loc, memRefType,
+        mlir::FlatSymbolRefAttr::get(context, "__constant"));
+    llvm::errs()<<"***********************\n";
+    llvm::errs()<<getglobalop<<"\n";
+    llvm::errs()<<"***********************\n";
+    // auto getglobal = rewriter.create<memref::GetGlobalOp>(loc, globalop, "__constant");
+    // mlir::ValueRange valueRange(globalop.getInitialValue());
+    // rewriter.replaceOp(op, getglobalop);
     return success();
   }
 };
+// class ConstantOpLowering : public ConversionPattern {
+// public:
+//   explicit ConstantOpLowering(MLIRContext *context)
+//       : ConversionPattern(toy::ConstantOp::getOperationName(), 1, context) {}
+
+//   // Specify the conversion pattern.
+//   LogicalResult
+//   matchAndRewrite(Operation *op, ArrayRef<Value> operands,
+//                   ConversionPatternRewriter &rewriter) const override {
+//     auto toyConstOp = cast<toy::ConstantOp>(op);
+
+    
+//     Location loc = op->getLoc();
+//     auto tensorType = toyConstOp.getType().cast<TensorType>();
+    
+//     auto memRefType = convertTensorToMemRef(tensorType);
+    
+//     auto alloc = insertAllocAndDealloc(memRefType, loc, rewriter);
+//     // Convert the constant to an arith.constantop operation.
+//     // auto arithConstOp =
+//     //     rewriter.create<arith::ConstantOp>(op->getLoc(), toyConstOp.getValue());
+
+//     // Replace the toy.constantop with the arith.constantop.
+//     // rewriter.replaceOp(op, arithConstOp.getResult());
+//     rewriter.create<memref::TensorStoreOp>(
+//       loc, 
+//       // rewriter.replaceOpWithNewOp<poseidon::Constantop>(op, tensorType, constantValue),
+//       rewriter.create<arith::ConstantOp>(op->getLoc(), toyConstOp.getValue()),
+//       alloc);
+
+//     rewriter.replaceOp(op, alloc);
+//     return success();
+//   }
+// };
+
 
 //===----------------------------------------------------------------------===//
 // ToyToAffine RewritePatterns: Func operations

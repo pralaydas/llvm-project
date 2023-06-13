@@ -102,7 +102,14 @@ struct ConstantopLowering : public OpRewritePattern<toy::ConstantOp> {
         // auto alloc = insertAllocAndDealloc(memRefType, loc, rewriter);
         // rewriter.replaceOp(op, alloc);
         rewriter.replaceOpWithNewOp<poseidon::Constantop>(op, op.getType(), op.getValue());
-        
+        // auto toyConstOp = cast<toy::ConstantOp>(op);
+
+        // Convert the constant to an arith.constantop operation.
+        // auto arithConstOp =
+        //     rewriter.create<arith::ConstantOp>(op->getLoc(), toyConstOp.getValue());
+
+        // Replace the toy.constantop with the arith.constantop.
+        // rewriter.replaceOp(op, arithConstOp.getResult());
         return success();
     }
 };

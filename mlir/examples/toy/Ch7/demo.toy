@@ -43,6 +43,6 @@ def main() {
               [5,2,3,4,1,2,3,4]
             ]
         ];
-
-  print(a);
+  var c = a+b;
+  print(c);
 }

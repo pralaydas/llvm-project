@@ -25,6 +25,7 @@ namespace poseidon {
 /// for a subset of the Toy IR (e.g. matmul).
 std::unique_ptr<mlir::Pass> createLowerToPoseidonPass();
 std::unique_ptr<mlir::Pass> createLowerToPoseidonLoopsPass();
+std::unique_ptr<mlir::Pass> createLowerToLLVMPass();
 
 
 } // namespace poseidon

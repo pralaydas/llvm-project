@@ -31,6 +31,7 @@ add_toy_chapter(toyc-ch7
   # /************************* include for poseidon ***************/
   mlir/LowerToPoseidon.cpp
   mlir/LowerToPoseidonLoops.cpp
+  mlir/LowerToPos_LLVM.cpp
   # lib/Dialect/Poseidon/PoseidonDialect.cpp
   # lib/Dialect/Poseidon/PoseidonOps.cpp
   mlir/PoseidonDialect.cpp

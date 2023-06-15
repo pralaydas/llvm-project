@@ -231,83 +231,6 @@ private:
 //         return success();
 //     }
 // };
-class ConstantOpLowering : public ConversionPattern {
-public:
-  ConstantOpLowering(MLIRContext *context)
-      : ConversionPattern(poseidon::Constantop::getOperationName(), 1, context) {}
-
-  LogicalResult
-  matchAndRewrite(Operation *op, ArrayRef<Value> operands,
-                  ConversionPatternRewriter &rewriter) const override {
-    
-    auto constantOp = cast<poseidon::Constantop>(op);
-    auto loc = constantOp.getLoc();
-
-    // Get the tensor attribute from the toy.constant operation.
-    DenseElementsAttr tensorAttr = constantOp.getValue();
-
-    // Convert the tensor value to an LLVM dialect constant representation.
-    Value llvmConstant = convertToLLVMConstant(loc, tensorAttr, rewriter);
-    // llvm::errs()<<llvmConstant<<"\n";
-    rewriter.replaceOp(op, llvmConstant);
-    
-    llvm::errs()<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n";
-    return success();
-  }
-
-private:
-  Value convertToLLVMConstant(Location loc, DenseElementsAttr tensorAttr,
-                           ConversionPatternRewriter &rewriter) const {
-  
-  ShapedType tensorType = tensorAttr.getType().cast<ShapedType>();
-  Type elementType = tensorType.getElementType();
-  llvm::errs()<<elementType<<"\n";
-  llvm::errs()<<"***********************\n";
-  // Create an LLVM dialect type corresponding to the element type.
-  // Type llvmElementType = typeConverter->convertType(elementType);
-  // llvm::errs()<<"#######################\n";
-  // llvm::errs()<<llvmElementType<<"\n";
-  Type llvmf64 = rewriter.getF64Type();
-  // return rewriter.create<LLVM::ConstantOp>(loc, tensorAttr);
-  // Type llvmElementType = typeConverter->convertType(elementType);
-  
-  // Extract the constant values from the dense tensor attribute.
-  SmallVector<Attribute, 4> constantValues;
-  for (Attribute value : tensorAttr.getValues<Attribute>())
-    constantValues.push_back(value);
-  for(auto i: constantValues)
-    llvm::errs()<<i<<"\n";
-  llvm::errs() <<constantValues.size()<<"\n";
-  llvm::errs()<<"#######################\n";
-
-  // Create an LLVM dialect constant for each element value.
-  SmallVector<Value, 4> llvmConstants;
-  for (Attribute constantValue : constantValues) {
-    APFloat floatValue = constantValue.cast<FloatAttr>().getValue();
-    llvmConstants.push_back(
-        rewriter.create<LLVM::ConstantOp>(loc, llvmf64,
-                                          rewriter.getFloatAttr(llvmf64, floatValue)));
-  }
-  for(auto i: llvmConstants)
-    llvm::errs()<<i<<"\n";
-  llvm::errs() <<llvmConstants.size()<<"\n";
-  
-  // Create an LLVM dialect array constant with the element constants.
-  Type llvmArrayType = LLVM::LLVMArrayType::get(llvmf64, llvmConstants.size());
-  llvm::errs()<< llvmArrayType <<"\n";
-
-  Value llvmConstantArray = rewriter.create<LLVM::ConstantOp>(loc, llvmArrayType, llvmConstants);
-  llvm::errs()<<llvmConstantArray<<"\n";
-  // rewriter.setInsertionPointAfterValue(llvmConstantArray);
-  // Operation *llvmConstantArrayOp = llvmConstantArray.getDefiningOp();
-  // llvm::errs()<<*llvmConstantArrayOp<<"\n";
-  // rewriter.setInsertionPointAfter(llvmConstantArrayOp);
-  // for (size_t i = 0; i < llvmConstants.size(); ++i)
-  //   rewriter.create<LLVM::InsertValueOp>(loc, llvmArrayType, llvmConstants[i],
-  //                                        rewriter.getI64ArrayAttr(i));
-  return llvmConstantArray;
-  }
-};
 
 }
 
@@ -352,9 +275,6 @@ struct PoseidonToLLVMLoweringPass
         // The only remaining operation to lower from the `toy` dialect, is the
         // PrintOp.
         patterns.add<PrintOpLowering>(&getContext());
-        llvm::errs()<<"^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
-        patterns.add<ConstantOpLowering>(&getContext());
-        llvm::errs()<<"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
         // We want to completely lower to LLVM, so we use a `FullConversion`. This
         // ensures that only legal operations will remain after the conversion.
         auto module = getOperation();

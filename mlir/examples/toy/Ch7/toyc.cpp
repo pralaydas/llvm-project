@@ -198,10 +198,10 @@ int loadAndProcessMLIR(mlir::MLIRContext &context,
     // Partially lower the toy dialect.
     // Add a few cleanups post lowering.
     mlir::OpPassManager &optPM = pm.nest<mlir::toy::FuncOp>();
-    optPM.addPass(mlir::createCanonicalizerPass());
+    // optPM.addPass(mlir::createCanonicalizerPass());
     optPM.addPass(mlir::toy::createShapeInferencePass());
-    optPM.addPass(mlir::createCanonicalizerPass());
-    optPM.addPass(mlir::createCSEPass());
+    // optPM.addPass(mlir::createCanonicalizerPass());
+    // optPM.addPass(mlir::createCSEPass());
     
     // pm.addPass(mlir::poseidon::createLowerToPoseidonPass());
     pm.addPass(mlir::poseidon::createLowerToPoseidonLoopsPass());

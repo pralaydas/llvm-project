@@ -364,56 +364,53 @@ public:
     
     auto loc = op->getLoc();
     auto tensorType = (*op->result_type_begin()).cast<TensorType>();
+    
     auto memRefType = convertTensorToMemRef(tensorType);
-    
+    // auto alloc = insertAllocAndDealloc(memRefType, loc, rewriter);
+
     auto constantOp = cast<toy::ConstantOp>(op);
-    
 
     // Get the tensor attribute from the toy.constant operation.
     DenseElementsAttr tensorAttr = constantOp.getValue();
-    
     
     auto attrValue = op->getAttrs();
     
     ModuleOp parentModule = op->getParentOfType<ModuleOp>();
     auto *context = parentModule.getContext();
+    auto *context_ = op->getContext();
 
-    mlir::OpBuilder::InsertionGuard insertGuard(rewriter);
+    getOrCreateGlobal(
+        loc, rewriter, "__constant", tensorAttr, parentModule, memRefType, op);
     
-    rewriter.setInsertionPointToStart(parentModule.getBody());
+    auto getglobalop = rewriter.create<memref::GetGlobalOp>(loc, memRefType,
+        mlir::FlatSymbolRefAttr::get(context_, "__constant"));
 
-    auto type = op->getOperands().getTypes();
+    rewriter.eraseOp(op);
+    // rewriter.replaceOp(op,alloc);
+    return success();
+  }
+  private:
+  static void getOrCreateGlobal(Location loc, OpBuilder &builder,
+                                       StringRef name, DenseElementsAttr tensorAttr,
+                                       ModuleOp module, MemRefType memRefType, Operation *op){
+    
+    auto *context = module.getContext();
+    mlir::OpBuilder::InsertionGuard insertGuard(builder);
+    
+    builder.setInsertionPointToStart(module.getBody());
 
-    auto globalop = rewriter.create<memref::GlobalOp>(
+    auto globalop = builder.create<memref::GlobalOp>(
           loc, 
-          mlir::StringAttr::get(context, "__constant"),
-          nullptr,
+          mlir::StringAttr::get(context, name),
+          mlir::StringAttr::get(context, "private"),
           mlir::TypeAttr::get(memRefType),
           tensorAttr,
           mlir::UnitAttr::get(context),
           nullptr);
-    
-    
-    // TypeRange range({memRefType});
-    // ValueRange value(operands);
-    
-    // llvm::errs()<<"&&&&&&&&&&&&&\n";
 
-    // auto globalop = rewriter.create<memref::GlobalOp>(loc, range, value, attrValue);
-    llvm::errs()<<"***********************\n";
-    llvm::errs()<<globalop<<"\n";
-    llvm::errs()<<"***********************\n";
-    auto getglobalop = rewriter.create<memref::GetGlobalOp>(loc, memRefType,
-        mlir::FlatSymbolRefAttr::get(context, "__constant"));
-    llvm::errs()<<"***********************\n";
-    llvm::errs()<<getglobalop<<"\n";
-    llvm::errs()<<"***********************\n";
-    // auto getglobal = rewriter.create<memref::GetGlobalOp>(loc, globalop, "__constant");
-    // mlir::ValueRange valueRange(globalop.getInitialValue());
-    // rewriter.replaceOp(op, getglobalop);
-    return success();
+    return;    
   }
-};
+// };
 // class ConstantOpLowering : public ConversionPattern {
 // public:
 //   explicit ConstantOpLowering(MLIRContext *context)
@@ -447,7 +444,7 @@ public:
 //     rewriter.replaceOp(op, alloc);
 //     return success();
 //   }
-// };
+};
 
 
 //===----------------------------------------------------------------------===//

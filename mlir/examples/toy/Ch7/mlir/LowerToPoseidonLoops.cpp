@@ -351,6 +351,9 @@ struct AddOPLowering : public LowerOp<toy::AddOp> {
 //     return success();
 //   }
 // };
+//===----------------------------------------------------------------------===//
+// ToyToMemref RewritePatterns: Constant operations
+//===----------------------------------------------------------------------===//
 
 class ConstantOpLowering : public ConversionPattern {
 public:
@@ -378,12 +381,17 @@ public:
     ModuleOp parentModule = op->getParentOfType<ModuleOp>();
     auto *context = parentModule.getContext();
     auto *context_ = op->getContext();
+    
+    std::string pega  = "constant_";
+    static int pos_val = 0;
+    pega  = pega + char(pos_val);
+    pos_val ++;
 
     getOrCreateGlobal(
-        loc, rewriter, "__constant", tensorAttr, parentModule, memRefType, op);
+        loc, rewriter, pega, tensorAttr, parentModule, memRefType, op);
     
     auto getglobalop = rewriter.create<memref::GetGlobalOp>(loc, memRefType,
-        mlir::FlatSymbolRefAttr::get(context_, "__constant"));
+        mlir::FlatSymbolRefAttr::get(context_, pega));
 
     rewriter.eraseOp(op);
     // rewriter.replaceOp(op,alloc);
@@ -398,7 +406,7 @@ public:
     mlir::OpBuilder::InsertionGuard insertGuard(builder);
     
     builder.setInsertionPointToStart(module.getBody());
-
+    
     auto globalop = builder.create<memref::GlobalOp>(
           loc, 
           mlir::StringAttr::get(context, name),
@@ -410,7 +418,12 @@ public:
 
     return;    
   }
-// };
+};
+//===----------------------------------------------------------------------===//
+// ToyToArith RewritePatterns: Constant operations
+//===----------------------------------------------------------------------===//
+
+
 // class ConstantOpLowering : public ConversionPattern {
 // public:
 //   explicit ConstantOpLowering(MLIRContext *context)
@@ -444,7 +457,7 @@ public:
 //     rewriter.replaceOp(op, alloc);
 //     return success();
 //   }
-};
+// };
 
 
 //===----------------------------------------------------------------------===//

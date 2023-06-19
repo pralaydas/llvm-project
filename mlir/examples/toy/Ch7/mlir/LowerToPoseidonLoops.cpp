@@ -125,7 +125,7 @@ struct BinaryOpLowering : public ConversionPattern {
   LogicalResult matchAndRewrite(Operation *op, ArrayRef<Value> operands,
                   ConversionPatternRewriter &rewriter) const final {
     auto loc = op->getLoc();
-    llvm::errs()<<"***************************\n";
+    
     // auto vecType = (*op->operand_type_begin());
     mlir::MLIRContext *context = op->getContext();
     Type elementType = mlir::FloatType::getF64(context);
@@ -372,7 +372,7 @@ public:
     
     auto memRefType = convertTensorToMemRef(tensorType);
     auto allocOp = insertAllocAndDealloc(memRefType, loc, rewriter);
-
+    
     auto constantOp = cast<toy::ConstantOp>(op);
 
     // Get the tensor attribute from the toy.constant operation.

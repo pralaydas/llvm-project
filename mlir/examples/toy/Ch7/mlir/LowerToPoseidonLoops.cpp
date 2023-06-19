@@ -106,7 +106,7 @@ static void lowerOpToLoops(Operation *op, ValueRange operands,
         // nestedBuilder.create<AffineStoreOp>(loc, valueToStore, alloc, ivs);
         nestedBuilder.create<AffineVectorStoreOp>(loc, valueToStore, alloc, ivs);
       });
-
+  
   // Replace this operation with the generated alloc.
   rewriter.replaceOp(op, alloc);
 }
@@ -125,6 +125,7 @@ struct BinaryOpLowering : public ConversionPattern {
   LogicalResult matchAndRewrite(Operation *op, ArrayRef<Value> operands,
                   ConversionPatternRewriter &rewriter) const final {
     auto loc = op->getLoc();
+    llvm::errs()<<"***************************\n";
     // auto vecType = (*op->operand_type_begin());
     mlir::MLIRContext *context = op->getContext();
     Type elementType = mlir::FloatType::getF64(context);
@@ -162,6 +163,7 @@ struct BinaryOpLowering : public ConversionPattern {
                      return builder.create<LoweredBinaryOp>(loc, vecType, loadedLhs,
                                                             loadedRhs);
                    });
+    
     return success();
   }
 };
@@ -369,7 +371,7 @@ public:
     auto tensorType = (*op->result_type_begin()).cast<TensorType>();
     
     auto memRefType = convertTensorToMemRef(tensorType);
-    // auto alloc = insertAllocAndDealloc(memRefType, loc, rewriter);
+    auto allocOp = insertAllocAndDealloc(memRefType, loc, rewriter);
 
     auto constantOp = cast<toy::ConstantOp>(op);
 
@@ -394,11 +396,11 @@ public:
         mlir::FlatSymbolRefAttr::get(context_, pega));
 
     
-    auto allocOp  = rewriter.create<memref::AllocOp>(loc, memRefType);
-    auto copyOp = rewriter.create<memref::CopyOp>(loc, getglobalOp.getResult(), allocOp.getResult());
+    // auto allocOp  = rewriter.create<memref::AllocOp>(loc, memRefType);
+    auto copyOp = rewriter.create<memref::CopyOp>(loc, getglobalOp, allocOp);
 
-    rewriter.eraseOp(op);
-    // rewriter.replaceOp(op,alloc);
+    // rewriter.eraseOp(op);
+    rewriter.replaceOp(op,allocOp);
     return success();
   }
   private:

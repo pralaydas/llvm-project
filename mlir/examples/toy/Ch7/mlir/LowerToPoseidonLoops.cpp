@@ -390,8 +390,12 @@ public:
     getOrCreateGlobal(
         loc, rewriter, pega, tensorAttr, parentModule, memRefType, op);
     
-    auto getglobalop = rewriter.create<memref::GetGlobalOp>(loc, memRefType,
+    auto getglobalOp = rewriter.create<memref::GetGlobalOp>(loc, memRefType,
         mlir::FlatSymbolRefAttr::get(context_, pega));
+
+    
+    auto allocOp  = rewriter.create<memref::AllocOp>(loc, memRefType);
+    auto copyOp = rewriter.create<memref::CopyOp>(loc, getglobalOp.getResult(), allocOp.getResult());
 
     rewriter.eraseOp(op);
     // rewriter.replaceOp(op,alloc);

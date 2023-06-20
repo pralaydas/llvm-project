@@ -71,18 +71,21 @@ enum Action {
   // ToyToPoseidonLoweringPass
   //===----------------------------------------------------------------------===//
   DumpMLIRPoseidon,
-  DumpMLIRAffine,
+  // DumpMLIRAffine,
   DumpMLIRLLVM,
   DumpLLVMIR,
   RunJIT
 };
 } // namespace
+
+int dumpLLVMIR(mlir::ModuleOp );
+
 static cl::opt<enum Action> emitAction(
     "emit", cl::desc("Select the kind of output desired"),
     cl::values(clEnumValN(DumpAST, "ast", "output the AST dump")),
     cl::values(clEnumValN(DumpMLIR, "mlir", "output the MLIR dump")),
-    cl::values(clEnumValN(DumpMLIRAffine, "mlir-affine",
-                          "output the MLIR dump after affine lowering")),
+    // cl::values(clEnumValN(DumpMLIRAffine, "mlir-affine",
+    //                       "output the MLIR dump after affine lowering")),
     cl::values(clEnumValN(DumpMLIRLLVM, "mlir-llvm",
                           "output the MLIR dump after llvm lowering")),
     cl::values(clEnumValN(DumpLLVMIR, "llvm", "output the LLVM IR dump")),
@@ -154,7 +157,7 @@ int loadAndProcessMLIR(mlir::MLIRContext &context,
   applyPassManagerCLOptions(pm);
 
   // Check to see what granularity of MLIR we are compiling to.
-  bool isLoweringToAffine = emitAction >= Action::DumpMLIRAffine;
+  // bool isLoweringToAffine = emitAction >= Action::DumpMLIRAffine;
   bool isLoweringToLLVM = emitAction >= Action::DumpMLIRLLVM;
   //===----------------------------------------------------------------------===//
   // PoseidonLoweringPass
@@ -162,7 +165,7 @@ int loadAndProcessMLIR(mlir::MLIRContext &context,
   bool isLoweringToPoseidon = emitAction >= Action::DumpMLIRPoseidon;
 
 
-  if (enableOpt || isLoweringToAffine) {
+  if (enableOpt || isLoweringToPoseidon) {
     // Inline all functions into main and then delete them.
     pm.addPass(mlir::createInlinerPass());
 
@@ -174,7 +177,7 @@ int loadAndProcessMLIR(mlir::MLIRContext &context,
     optPM.addPass(mlir::createCanonicalizerPass());
     optPM.addPass(mlir::createCSEPass());
   }
-
+  /*
   if (isLoweringToAffine) {
     // Partially lower the toy dialect.
     pm.addPass(mlir::toy::createLowerToAffinePass());
@@ -189,31 +192,29 @@ int loadAndProcessMLIR(mlir::MLIRContext &context,
       optPM.addPass(mlir::createLoopFusionPass());
       optPM.addPass(mlir::createAffineScalarReplacementPass());
     }
-  }
+  }*/
   //===----------------------------------------------------------------------===//
   // PoseidonLoweringPass
   //===----------------------------------------------------------------------===//
   if (isLoweringToPoseidon) {
-
+    llvm::errs() <<"from lower to poseidon pass\n";
     // Partially lower the toy dialect.
     // Add a few cleanups post lowering.
-    mlir::OpPassManager &optPM = pm.nest<mlir::toy::FuncOp>();
-    // optPM.addPass(mlir::createCanonicalizerPass());
-    optPM.addPass(mlir::toy::createShapeInferencePass());
-    // optPM.addPass(mlir::createCanonicalizerPass());
-    // optPM.addPass(mlir::createCSEPass());
+    mlir::OpPassManager &optPM = pm.nest<mlir::func::FuncOp>();
+    optPM.addPass(mlir::createCanonicalizerPass());
+    optPM.addPass(mlir::createCSEPass());
     
     // pm.addPass(mlir::poseidon::createLowerToPoseidonPass());
     pm.addPass(mlir::poseidon::createLowerToPoseidonLoopsPass());
 
-    pm.addPass(mlir::poseidon::createLowerToLLVMPass());
-    // optPM.addPass(mlir::createCSEPass());
-  
+    // pm.addPass(mlir::poseidon::createLowerToLLVMPass());
+    optPM.addPass(mlir::createCSEPass());
   }
 
   if (isLoweringToLLVM) {
     // Finish lowering the toy IR to the LLVM dialect.
-    pm.addPass(mlir::toy::createLowerToLLVMPass());
+    // pm.addPass(mlir::toy::createLowerToLLVMPass());
+    pm.addPass(mlir::poseidon::createLowerToLLVMPass());
   }
 
   if (mlir::failed(pm.run(*module)))
@@ -238,10 +239,11 @@ int dumpAST() {
 int dumpLLVMIR(mlir::ModuleOp module) {
   // Register the translation to LLVM IR with the MLIR context.
   mlir::registerLLVMDialectTranslation(*module->getContext());
-
+  llvm::errs()<<"from dumpLLVMIR 1\n";
   // Convert the module to LLVM IR in a new LLVM IR context.
   llvm::LLVMContext llvmContext;
   auto llvmModule = mlir::translateModuleToLLVMIR(module, llvmContext);
+  llvm::errs()<<"from dumpLLVMIR 2\n";
   if (!llvmModule) {
     llvm::errs() << "Failed to emit LLVM IR\n";
     return -1;

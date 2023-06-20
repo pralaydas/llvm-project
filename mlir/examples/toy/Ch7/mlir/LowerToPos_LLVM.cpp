@@ -220,8 +220,8 @@ struct AddOpLowering : public ConvertOpToLLVMPattern<poseidon::Addop> {
         if (!type || !LLVM::isCompatibleType(type))
           return rewriter.notifyMatchFailure(op, "failed to convert result type");
 
-        auto newOp =
-          rewriter.create<LLVM::FAddOp>(op.getLoc(), type, op.getOperand(0), op.getOperand(1));
+        // auto newOp =
+        //   rewriter.create<LLVM::FAddOp>(op.getLoc(), type, op.getOperand(0), op.getOperand(1));
         // for (const NamedAttribute &attr : op->getAttrs()) {
         //   if (attr.getName().strref() == "value")
         //     continue;

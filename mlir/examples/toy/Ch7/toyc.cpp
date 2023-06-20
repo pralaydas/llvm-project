@@ -197,7 +197,6 @@ int loadAndProcessMLIR(mlir::MLIRContext &context,
   // PoseidonLoweringPass
   //===----------------------------------------------------------------------===//
   if (isLoweringToPoseidon) {
-    llvm::errs() <<"from lower to poseidon pass\n";
     // Partially lower the toy dialect.
     // Add a few cleanups post lowering.
     mlir::OpPassManager &optPM = pm.nest<mlir::func::FuncOp>();

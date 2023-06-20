@@ -385,8 +385,9 @@ public:
     auto *context_ = op->getContext();
     
     std::string pega  = "constant_";
+
     static int pos_val = 0;
-    pega  = pega + char(pos_val);
+    pega  = pega + std::to_string(pos_val);
     pos_val ++;
 
     getOrCreateGlobal(

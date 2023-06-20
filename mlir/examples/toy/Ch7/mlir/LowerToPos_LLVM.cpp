@@ -205,41 +205,42 @@ private:
 //     }
 // };
 
-// struct ConstantOpLowering : public ConvertOpToLLVMPattern<poseidon::Constantop> {
-//   using ConvertOpToLLVMPattern<poseidon::Constantop>::ConvertOpToLLVMPattern;
+struct AddOpLowering : public ConvertOpToLLVMPattern<poseidon::Addop> {
+  using ConvertOpToLLVMPattern<poseidon::Addop>::ConvertOpToLLVMPattern;
 
-//   LogicalResult
-//   matchAndRewrite(poseidon::Constantop op, OpAdaptor adaptor,
-//                   ConversionPatternRewriter &rewriter) const override {
-//         // llvm::errs()<<op.getValue() <<"\n";
-//         // return LLVM::detail::oneToOneRewrite(op, LLVM::ConstantOp::getOperationName(),
-//         //                                adaptor.getOperands(), op->getAttrs(),
-//         //                                *getTypeConverter(), rewriter);  
+  LogicalResult
+  matchAndRewrite(poseidon::Addop op, OpAdaptor adaptor,
+                  ConversionPatternRewriter &rewriter) const override {
+        // llvm::errs()<<op.getValue() <<"\n";
+        // return LLVM::detail::oneToOneRewrite(op, LLVM::ConstantOp::getOperationName(),
+        //                                adaptor.getOperands(), op->getAttrs(),
+        //                                *getTypeConverter(), rewriter);  
 
-//         auto type = typeConverter->convertType(op.getResult().getType());
-//         if (!type || !LLVM::isCompatibleType(type))
-//           return rewriter.notifyMatchFailure(op, "failed to convert result type");
+        auto type = typeConverter->convertType(op.getResult().getType());
+        if (!type || !LLVM::isCompatibleType(type))
+          return rewriter.notifyMatchFailure(op, "failed to convert result type");
 
-//         auto newOp =
-//           rewriter.create<LLVM::ConstantOp>(op.getLoc(), type, op.getValue());
-//         for (const NamedAttribute &attr : op->getAttrs()) {
-//           if (attr.getName().strref() == "value")
-//             continue;
-//           newOp->setAttr(attr.getName(), attr.getValue());
-//         }
-//         rewriter.replaceOpWithNewOp<poseidon::Constantop>(op, type, op.getValue());
-//         return success();
-//     }
-// };
+        auto newOp =
+          rewriter.create<LLVM::FAddOp>(op.getLoc(), type, op.getOperand(0), op.getOperand(1));
+        // for (const NamedAttribute &attr : op->getAttrs()) {
+        //   if (attr.getName().strref() == "value")
+        //     continue;
+        //   newOp->setAttr(attr.getName(), attr.getValue());
+        // }
+        rewriter.replaceOpWithNewOp<LLVM::FAddOp>(op, type, op.getOperand(0), op.getOperand(1));
+        // rewriter.eraseOp(op);
+        return success();
+    }
+};
 
 }
 
-// void populatePoseidonToLLVMConversionPatterns(LLVMTypeConverter &converter, 
-//                                     RewritePatternSet &patterns) {
-//   // clang-format off
-//   patterns.add<ConstantOpLowering>(converter);
-//   // clang-format on
-// }
+void populatePoseidonToLLVMConversionPatterns(LLVMTypeConverter &converter, 
+                                    RewritePatternSet &patterns) {
+  // clang-format off
+  patterns.add<AddOpLowering>(converter);
+  // clang-format on
+}
 
 namespace {
 struct PoseidonToLLVMLoweringPass
@@ -260,9 +261,11 @@ struct PoseidonToLLVMLoweringPass
         
         
         
-        // populatePoseidonToLLVMConversionPatterns(typeConverter, patterns);
+        populatePoseidonToLLVMConversionPatterns(typeConverter, patterns);
 
         populateAffineToStdConversionPatterns(patterns);
+        populateAffineToVectorConversionPatterns(patterns);
+        mlir::populateVectorToLLVMConversionPatterns(typeConverter, patterns, false, false);
         populateSCFToControlFlowConversionPatterns(patterns);
         mlir::arith::populateArithToLLVMConversionPatterns(typeConverter, patterns);
         populateMemRefToLLVMConversionPatterns(typeConverter, patterns);

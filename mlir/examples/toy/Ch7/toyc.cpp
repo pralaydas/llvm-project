@@ -206,7 +206,7 @@ int loadAndProcessMLIR(mlir::MLIRContext &context,
     // pm.addPass(mlir::poseidon::createLowerToPoseidonPass());
     pm.addPass(mlir::poseidon::createLowerToPoseidonLoopsPass());
 
-    // pm.addPass(mlir::poseidon::createLowerToLLVMPass());
+    pm.addPass(mlir::poseidon::createLowerToLLVMPass());
     // optPM.addPass(mlir::createCSEPass());
   
   }

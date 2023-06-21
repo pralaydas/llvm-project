@@ -238,11 +238,9 @@ int dumpAST() {
 int dumpLLVMIR(mlir::ModuleOp module) {
   // Register the translation to LLVM IR with the MLIR context.
   mlir::registerLLVMDialectTranslation(*module->getContext());
-  llvm::errs()<<"from dumpLLVMIR 1\n";
   // Convert the module to LLVM IR in a new LLVM IR context.
   llvm::LLVMContext llvmContext;
   auto llvmModule = mlir::translateModuleToLLVMIR(module, llvmContext);
-  llvm::errs()<<"from dumpLLVMIR 2\n";
   if (!llvmModule) {
     llvm::errs() << "Failed to emit LLVM IR\n";
     return -1;

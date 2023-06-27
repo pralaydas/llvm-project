@@ -201,7 +201,7 @@ int loadAndProcessMLIR(mlir::MLIRContext &context,
     // Add a few cleanups post lowering.
     mlir::OpPassManager &optPM = pm.nest<mlir::func::FuncOp>();
     optPM.addPass(mlir::createCanonicalizerPass());
-    optPM.addPass(mlir::createCSEPass());
+    // optPM.addPass(mlir::createCSEPass());
     
     // pm.addPass(mlir::poseidon::createLowerToPoseidonPass());
     pm.addPass(mlir::poseidon::createLowerToPoseidonLoopsPass());
@@ -213,7 +213,8 @@ int loadAndProcessMLIR(mlir::MLIRContext &context,
   if (isLoweringToLLVM) {
     // Finish lowering the toy IR to the LLVM dialect.
     // pm.addPass(mlir::toy::createLowerToLLVMPass());
-    pm.addPass(mlir::poseidon::createLowerToLLVMPass());
+    // pm.addPass(mlir::poseidon::createLowerToLLVMPass()); // emit for now
+    pm.addPass(mlir::poseidon::createPrintPass());
   }
 
   if (mlir::failed(pm.run(*module)))

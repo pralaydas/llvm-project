@@ -1,76 +1,97 @@
-
+; ModuleID = 'LLVMDialectModule'
+source_filename = "LLVMDialectModule"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
+@nl = internal constant [2 x i8] c"\0A\00"
 @frmt_spec = internal constant [4 x i8] c"%f \00"
-@constant_1 = private unnamed_addr constant [8 x double] [double 1.100000e+00, double 2.400000e+00, double 4.700000e+00, double 1.300000e+00, double 1.000000e+00, double 2.100000e+00, double 2.300000e+00, double 7.200000e+00]
-@constant_0 = private unnamed_addr constant [8 x double] [double 1.300000e+00, double 2.600000e+00, double 4.200000e+00, double 1.100000e+00, double 1.900000e+00, double 2.200000e+00, double 2.500000e+00, double 7.700000e+00]
+@constant_1 = private constant [16 x float] [float 1.000000e+00, float 2.500000e+00, float 4.000000e+00, float 1.000000e+00, float 1.000000e+00, float 2.000000e+00, float 2.000000e+00, float 7.000000e+00, float 1.500000e+00, float 2.000000e+00, float 4.000000e+00, float 1.000000e+00, float 1.000000e+00, float 2.000000e+00, float 2.000000e+00, float 7.500000e+00]
+@constant_0 = private constant [16 x float] [float 1.000000e+00, float 2.000000e+00, float 4.000000e+00, float 1.500000e+00, float 1.000000e+00, float 2.000000e+00, float 2.000000e+00, float 7.500000e+00, float 1.000000e+00, float 2.000000e+00, float 4.000000e+00, float 1.000000e+00, float 1.000000e+00, float 2.000000e+00, float 2.500000e+00, float 7.000000e+00]
 
-; Function Attrs: mustprogress nofree nounwind willreturn allockind("alloc,uninitialized") allocsize(0) memory(inaccessiblemem: readwrite)
-declare noalias noundef ptr @malloc(i64 noundef) local_unnamed_addr #0
+declare ptr @malloc(i64)
 
-; Function Attrs: mustprogress nounwind willreturn allockind("free") memory(argmem: readwrite, inaccessiblemem: readwrite)
-declare void @free(ptr allocptr nocapture noundef) local_unnamed_addr #1
+declare void @free(ptr)
 
-; Function Attrs: nofree nounwind
-declare noundef i32 @printf(ptr nocapture noundef readonly, ...) local_unnamed_addr #2
+declare i32 @printf(ptr, ...)
 
-; Function Attrs: nounwind
-define void @main() local_unnamed_addr #3 {
-.preheader.preheader:
-  %0 = tail call dereferenceable_or_null(64) ptr @malloc(i64 64)
-  %1 = tail call dereferenceable_or_null(64) ptr @malloc(i64 64)
-  %2 = tail call dereferenceable_or_null(64) ptr @malloc(i64 64)
-  tail call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 1 dereferenceable(64) %2, ptr noundef nonnull align 16 dereferenceable(64) @constant_0, i64 64, i1 false)
-  tail call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 1 dereferenceable(64) %1, ptr noundef nonnull align 16 dereferenceable(64) @constant_1, i64 64, i1 false)
-  %3 = load <4 x double>, ptr %2, align 8
-  %4 = load <4 x double>, ptr %1, align 8
-  %5 = fadd <4 x double> %3, %4
-  store <4 x double> %5, ptr %0, align 8
-  %6 = getelementptr double, ptr %2, i64 4
-  %7 = load <4 x double>, ptr %6, align 8
-  %8 = getelementptr double, ptr %1, i64 4
-  %9 = load <4 x double>, ptr %8, align 8
-  %10 = fadd <4 x double> %7, %9
-  %11 = getelementptr double, ptr %0, i64 4
-  store <4 x double> %10, ptr %11, align 8
-  %12 = load double, ptr %0, align 8
-  %13 = tail call i32 (ptr, ...) @printf(ptr nonnull dereferenceable(1) @frmt_spec, double %12)
-  %14 = getelementptr double, ptr %0, i64 1
-  %15 = load double, ptr %14, align 8
-  %16 = tail call i32 (ptr, ...) @printf(ptr nonnull dereferenceable(1) @frmt_spec, double %15)
-  %17 = getelementptr double, ptr %0, i64 2
-  %18 = load double, ptr %17, align 8
-  %19 = tail call i32 (ptr, ...) @printf(ptr nonnull dereferenceable(1) @frmt_spec, double %18)
-  %20 = getelementptr double, ptr %0, i64 3
-  %21 = load double, ptr %20, align 8
-  %22 = tail call i32 (ptr, ...) @printf(ptr nonnull dereferenceable(1) @frmt_spec, double %21)
-  %23 = getelementptr double, ptr %0, i64 4
-  %24 = load double, ptr %23, align 8
-  %25 = tail call i32 (ptr, ...) @printf(ptr nonnull dereferenceable(1) @frmt_spec, double %24)
-  %26 = getelementptr double, ptr %0, i64 5
-  %27 = load double, ptr %26, align 8
-  %28 = tail call i32 (ptr, ...) @printf(ptr nonnull dereferenceable(1) @frmt_spec, double %27)
-  %29 = getelementptr double, ptr %0, i64 6
-  %30 = load double, ptr %29, align 8
-  %31 = tail call i32 (ptr, ...) @printf(ptr nonnull dereferenceable(1) @frmt_spec, double %30)
-  %32 = getelementptr double, ptr %0, i64 7
-  %33 = load double, ptr %32, align 8
-  %34 = tail call i32 (ptr, ...) @printf(ptr nonnull dereferenceable(1) @frmt_spec, double %33)
-  tail call void @free(ptr %2)
-  tail call void @free(ptr %1)
-  tail call void @free(ptr %0)
+define void @main() {
+  %1 = call ptr @malloc(i64 ptrtoint (ptr getelementptr (float, ptr null, i64 16) to i64))
+  %2 = insertvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } undef, ptr %1, 0
+  %3 = insertvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %2, ptr %1, 1
+  %4 = insertvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %3, i64 0, 2
+  %5 = insertvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %4, i64 16, 3, 0
+  %6 = insertvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %5, i64 1, 4, 0
+  %7 = call ptr @malloc(i64 ptrtoint (ptr getelementptr (float, ptr null, i64 16) to i64))
+  %8 = insertvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } undef, ptr %7, 0
+  %9 = insertvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %8, ptr %7, 1
+  %10 = insertvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %9, i64 0, 2
+  %11 = insertvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %10, i64 16, 3, 0
+  %12 = insertvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %11, i64 1, 4, 0
+  %13 = call ptr @malloc(i64 ptrtoint (ptr getelementptr (float, ptr null, i64 16) to i64))
+  %14 = insertvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } undef, ptr %13, 0
+  %15 = insertvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %14, ptr %13, 1
+  %16 = insertvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %15, i64 0, 2
+  %17 = insertvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %16, i64 16, 3, 0
+  %18 = insertvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %17, i64 1, 4, 0
+  %19 = extractvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %18, 1
+  %20 = extractvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %18, 2
+  %21 = getelementptr float, ptr %19, i64 %20
+  call void @llvm.memcpy.p0.p0.i64(ptr %21, ptr @constant_0, i64 mul (i64 ptrtoint (ptr getelementptr (float, ptr null, i32 1) to i64), i64 16), i1 false)
+  %22 = extractvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %12, 1
+  %23 = extractvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %12, 2
+  %24 = getelementptr float, ptr %22, i64 %23
+  call void @llvm.memcpy.p0.p0.i64(ptr %24, ptr @constant_1, i64 mul (i64 ptrtoint (ptr getelementptr (float, ptr null, i32 1) to i64), i64 16), i1 false)
+  br label %25
+
+25:                                               ; preds = %28, %0
+  %26 = phi i64 [ 0, %0 ], [ %38, %28 ]
+  %27 = icmp slt i64 %26, 16
+  br i1 %27, label %28, label %39
+
+28:                                               ; preds = %25
+  %29 = extractvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %18, 1
+  %30 = getelementptr float, ptr %29, i64 %26
+  %31 = load <16 x float>, ptr %30, align 8
+  %32 = extractvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %12, 1
+  %33 = getelementptr float, ptr %32, i64 %26
+  %34 = load <16 x float>, ptr %33, align 8
+  %35 = fadd <16 x float> %31, %34
+  %36 = extractvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %6, 1
+  %37 = getelementptr float, ptr %36, i64 %26
+  store <16 x float> %35, ptr %37, align 8
+  %38 = add i64 %26, 16
+  br label %25
+
+39:                                               ; preds = %25
+  br label %40
+
+40:                                               ; preds = %43, %39
+  %41 = phi i64 [ 0, %39 ], [ %48, %43 ]
+  %42 = icmp slt i64 %41, 16
+  br i1 %42, label %43, label %49
+
+43:                                               ; preds = %40
+  %44 = extractvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %6, 1
+  %45 = getelementptr float, ptr %44, i64 %41
+  %46 = load float, ptr %45, align 8
+  %47 = call i32 (ptr, ...) @printf(ptr @frmt_spec, float %46)
+  %48 = add i64 %41, 1
+  br label %40
+
+49:                                               ; preds = %40
+  %50 = extractvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %18, 0
+  call void @free(ptr %50)
+  %51 = extractvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %12, 0
+  call void @free(ptr %51)
+  %52 = extractvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %6, 0
+  call void @free(ptr %52)
   ret void
 }
 
-; Function Attrs: mustprogress nocallback nofree nounwind willreturn memory(argmem: readwrite)
-declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #4
+; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
+declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #0
 
-attributes #0 = { mustprogress nofree nounwind willreturn allockind("alloc,uninitialized") allocsize(0) memory(inaccessiblemem: readwrite) "alloc-family"="malloc" }
-attributes #1 = { mustprogress nounwind willreturn allockind("free") memory(argmem: readwrite, inaccessiblemem: readwrite) "alloc-family"="malloc" }
-attributes #2 = { nofree nounwind }
-attributes #3 = { nounwind }
-attributes #4 = { mustprogress nocallback nofree nounwind willreturn memory(argmem: readwrite) }
+attributes #0 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
 
 !llvm.module.flags = !{!0}
 

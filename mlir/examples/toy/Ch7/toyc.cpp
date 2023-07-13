@@ -167,15 +167,15 @@ int loadAndProcessMLIR(mlir::MLIRContext &context,
 
   if (enableOpt || isLoweringToPoseidon) {
     // Inline all functions into main and then delete them.
-    pm.addPass(mlir::createInlinerPass());
+    // pm.addPass(mlir::createInlinerPass()); // dead code elimination
 
     // Now that there is only one function, we can infer the shapes of each of
     // the operations.
-    mlir::OpPassManager &optPM = pm.nest<mlir::toy::FuncOp>();
-    optPM.addPass(mlir::createCanonicalizerPass());
-    optPM.addPass(mlir::toy::createShapeInferencePass());
-    optPM.addPass(mlir::createCanonicalizerPass());
-    optPM.addPass(mlir::createCSEPass());
+    // mlir::OpPassManager &optPM = pm.nest<mlir::toy::FuncOp>(); // dead code elimination
+    // optPM.addPass(mlir::createCanonicalizerPass());
+    // optPM.addPass(mlir::toy::createShapeInferencePass());
+    // optPM.addPass(mlir::createCanonicalizerPass());
+    // optPM.addPass(mlir::createCSEPass());
   }
   /*
   if (isLoweringToAffine) {
@@ -200,21 +200,25 @@ int loadAndProcessMLIR(mlir::MLIRContext &context,
     // Partially lower the toy dialect.
     // Add a few cleanups post lowering.
     mlir::OpPassManager &optPM = pm.nest<mlir::func::FuncOp>();
-    optPM.addPass(mlir::createCanonicalizerPass());
-    // optPM.addPass(mlir::createCSEPass());
+    // optPM.addPass(mlir::createCanonicalizerPass()); // dead code elimination
+    // optPM.addPass(mlir::createCSEPass()); // dead code elimination
     
-    // pm.addPass(mlir::poseidon::createLowerToPoseidonPass());
-    pm.addPass(mlir::poseidon::createLowerToPoseidonLoopsPass());
+    // only for create identical poseidon pass
+    // pm.addPass(mlir::poseidon::createLowerToPoseidonPass()); 
+    // 
+    // pm.addPass(mlir::poseidon::createLowerToPoseidonLoopsPass()); // original loop
+    
+    pm.addPass(mlir::poseidon::createLowerToLinalgPass()); // testing for linalg pass
 
-    // pm.addPass(mlir::poseidon::createLowerToLLVMPass());
-    optPM.addPass(mlir::createCSEPass());
+    // pm.addPass(mlir::poseidon::createLowerToLLVMPass()); // written in next line no 219
+    // optPM.addPass(mlir::createCSEPass()); // dead code elimination
   }
 
   if (isLoweringToLLVM) {
     // Finish lowering the toy IR to the LLVM dialect.
     // pm.addPass(mlir::toy::createLowerToLLVMPass());
-    // pm.addPass(mlir::poseidon::createLowerToLLVMPass()); // emit for now
-    pm.addPass(mlir::poseidon::createPrintPass());
+    pm.addPass(mlir::poseidon::createLowerToLLVMPass()); // emit for now
+    // pm.addPass(mlir::poseidon::createPrintPass());
   }
 
   if (mlir::failed(pm.run(*module)))

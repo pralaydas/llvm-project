@@ -2381,7 +2381,7 @@ static void buildAffineLoopNestImpl(
     // do step size =4 in the inner most loop
     // this is a temporary solution for variable step size
     if(i==e-1){
-      auto loop = loopCreatorFn(builder, loc, lbs[i], ubs[i], 4, loopBody);
+      auto loop = loopCreatorFn(builder, loc, lbs[i], ubs[i], 16, loopBody);
       builder.setInsertionPointToStart(loop.getBody());
     }else{
         auto loop = loopCreatorFn(builder, loc, lbs[i], ubs[i], steps[i], loopBody);

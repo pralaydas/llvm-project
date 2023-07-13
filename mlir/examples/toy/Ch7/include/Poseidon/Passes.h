@@ -27,7 +27,7 @@ std::unique_ptr<mlir::Pass> createLowerToPoseidonPass();
 std::unique_ptr<mlir::Pass> createLowerToPoseidonLoopsPass();
 std::unique_ptr<mlir::Pass> createLowerToLLVMPass();
 std::unique_ptr<mlir::Pass> createPrintPass();
-
+std::unique_ptr<mlir::Pass> createLowerToLinalgPass();
 } // namespace poseidon
 } // namespace mlir
 

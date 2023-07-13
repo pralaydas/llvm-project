@@ -129,7 +129,7 @@ struct BinaryOpLowering : public ConversionPattern {
     // auto vecType = (*op->operand_type_begin());
     mlir::MLIRContext *context = op->getContext();
     Type elementType = mlir::FloatType::getF64(context);
-    int64_t numElements = 4;
+    int64_t numElements = 16;
     VectorType vecType = VectorType::get(numElements, elementType);
 
     lowerOpToLoops(op, operands, rewriter,

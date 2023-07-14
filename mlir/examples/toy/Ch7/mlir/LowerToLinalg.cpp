@@ -112,7 +112,7 @@ struct FuncopLowering : public OpConversionPattern<toy::FuncOp> {
         // Verify that the given main has no inputs and results.
         if (op.getNumArguments() || op.getFunctionType().getNumResults()) {
             return rewriter.notifyMatchFailure(op, [](Diagnostic &diag) {
-                diag << "eexpected 'main' to have 0 inputs and 0 results";
+                diag << "expected 'main' to have 0 inputs and 0 results";
             });
         }
         // Create a new non-toy function, with the same region.
@@ -171,10 +171,10 @@ struct ConstantopLowering : public OpRewritePattern<toy::ConstantOp> {
 // ToyToAffine RewritePatterns: Binary operations
 //===----------------------------------------------------------------------===//
 struct AddopLowering : public OpConversionPattern<toy::AddOp> {
-    using OpConversionPattern::OpConversionPattern;
+    using OpConversionPattern<toy::AddOp>::OpConversionPattern;
 
     LogicalResult matchAndRewrite(toy::AddOp op, OpAdaptor adaptor,
-                                    ConversionPatternRewriter &rewriter) const override {
+                                    ConversionPatternRewriter &rewriter) const final{
         Location loc = op.getLoc();
         Value lhs = adaptor.getLhs();
         Value rhs = adaptor.getRhs();
@@ -196,16 +196,17 @@ struct AddopLowering : public OpConversionPattern<toy::AddOp> {
         // auto resultType = newResultType.cast<RankedTensorType>();
         // Type elementType = resultType.getElementType();
         Type elementType = lhs.getType().cast<RankedTensorType>().getElementType();
-        Value lhsDim0 = getDimOp(rewriter, loc, lhs, 0);
-        Value rhsDim0 = getDimOp(rewriter, loc, rhs, 0);
+        // Value lhsDim0 = getDimOp(rewriter, loc, lhs, 0);
+        // Value rhsDim0 = getDimOp(rewriter, loc, rhs, 0);
 
-        Value initTensor = createZeroInitTensor(
-        rewriter, loc, getTensorSizes(rewriter, loc, lhs), elementType);
+        // Value initTensor = createZeroInitTensor(
+        // rewriter, loc, getTensorSizes(rewriter, loc, lhs), elementType);
 
 
-        llvm::errs()<<initTensor<<"\n";
+        
         // Value initTensor = rewriter.create<linalg::initTensor>(loc, ValueRange{lhsDim0});
         SmallVector<AffineMap,2> indexingMaps = {
+            rewriter.getMultiDimIdentityMap(1),
             rewriter.getMultiDimIdentityMap(1),
             rewriter.getMultiDimIdentityMap(1)
         };
@@ -214,19 +215,23 @@ struct AddopLowering : public OpConversionPattern<toy::AddOp> {
         
         
         Value addop = rewriter.create<linalg::GenericOp>(
-            loc, initTensor.getType(),  ValueRange{lhs,rhs}, initTensor, indexingMaps,
-                iteratorTypes,
+                loc, lhs.getType(),  
+                /*inputs=*/ValueRange{lhs,rhs}, 
+                /*outputs=*/lhs, 
+                /*indexingMaps=*/indexingMaps,
+                /*iterationTypes=*/iteratorTypes,
                 [&](OpBuilder &b, Location loc, ValueRange args) {
                   Value input_lhs = args[0];
                   Value input_rhs = args[1];
                   Value output = args[2];
                   Value result = b.create<arith::AddFOp>(loc, input_lhs, input_rhs);
-                  Value result1 = b.create<arith::AddFOp>(loc, output, result);
-                  b.create<linalg::YieldOp>(loc, result1);
+                //   Value result1 = b.create<arith::AddFOp>(loc, output, result);
+                  b.create<linalg::YieldOp>(loc, result);
                 }).getResult(0);
-        
+        // llvm::errs()<<addop<<"\n";
         // rewriter.replaceOpWithNewOp<tensor::CastOp>(op, lhs.getType(), addop);
         rewriter.replaceOpWithNewOp<arith::AddFOp>(op, op.getOperand(0), op.getOperand(1));
+        // rewriter.eraseOp(op);
         return success();
     }
 };
@@ -250,9 +255,15 @@ struct PrintOpLowering : public OpConversionPattern<toy::PrintOp> {
     return success();
   }
 };
-
-
 } //namespace
+
+// void populateToyToLinalgConversionPatterns(TypeConverter &converter, 
+//                                     RewritePatternSet &patterns) {
+//   // clang-format off
+//   patterns.add<AddopLowering>(converter);
+//   // clang-format on
+// }
+
 
 //===----------------------------------------------------------------------===//
 // ToyToPoseidonLoweringPass
@@ -280,8 +291,10 @@ struct ToyToLinalgLoweringPass
 void ToyToLinalgLoweringPass::runOnOperation() {
     //The first thing to define is the conversion target. This will define the
     // final target for this lowering.
+    MLIRContext *context = &getContext();
     ConversionTarget target(getContext());
-    
+    TypeConverter typeConverter;
+    // RewritePatternSet patterns1(context);
     // We define the specific operations, or dialects, that are legal targets for
     // this lowering. In our case, we are lowering to our custom Poseidon dialect.
     target.addLegalDialect<poseidon::PoseidonDialect, 
@@ -307,7 +320,8 @@ void ToyToLinalgLoweringPass::runOnOperation() {
     RewritePatternSet patterns(&getContext());
     patterns.add<ConstantopLowering, ReturnopLowering, FuncopLowering,
                     AddopLowering, PrintOpLowering >(&getContext());
-
+    
+    // populateToyToLinalgConversionPatterns(typeConverter, patterns);
     // With the target and rewrite patterns defined, we can now attempt the
     // conversion. The conversion will signal failure if any of our `illegal`
     // operations were not converted successfully.

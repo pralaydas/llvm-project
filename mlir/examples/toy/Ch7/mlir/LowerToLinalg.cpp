@@ -29,8 +29,11 @@
 // Include header file for Linalg dialect
 //===----------------------------------------------------------------------===//
 #include "mlir/Dialect/Linalg/IR/Linalg.h"
+#include "mlir/Dialect/Linalg/IR/LinalgInterfaces.h"
+
 #include "mlir/Dialect/Tosa/IR/TosaOps.h"
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
+#include "mlir/Dialect/Vector/IR/VectorOps.h"
 //===----------------------------------------------------------------------===//
 // Include header file for Poseidon dialect
 //===----------------------------------------------------------------------===//
@@ -202,7 +205,7 @@ struct AddopLowering : public OpConversionPattern<toy::AddOp> {
         // Value initTensor = createZeroInitTensor(
         // rewriter, loc, getTensorSizes(rewriter, loc, lhs), elementType);
 
-
+        // llvm::errs()<<initTensor<<"\n";
         
         // Value initTensor = rewriter.create<linalg::initTensor>(loc, ValueRange{lhsDim0});
         SmallVector<AffineMap,2> indexingMaps = {
@@ -213,24 +216,102 @@ struct AddopLowering : public OpConversionPattern<toy::AddOp> {
         SmallVector<utils::IteratorType> iteratorTypes(
           lhsRank, utils::IteratorType::parallel);
         
+        VectorType vecType = VectorType::get(3, elementType);
+
         
         Value addop = rewriter.create<linalg::GenericOp>(
                 loc, lhs.getType(),  
-                /*inputs=*/ValueRange{lhs,rhs}, 
-                /*outputs=*/lhs, 
-                /*indexingMaps=*/indexingMaps,
-                /*iterationTypes=*/iteratorTypes,
+                ValueRange{lhs,rhs}, 
+                ValueRange{lhs}, 
+                indexingMaps,
+                iteratorTypes,
                 [&](OpBuilder &b, Location loc, ValueRange args) {
                   Value input_lhs = args[0];
+                    // llvm::errs()<<input_lhs<<"\n";
                   Value input_rhs = args[1];
-                  Value output = args[2];
-                  Value result = b.create<arith::AddFOp>(loc, input_lhs, input_rhs);
+                //   Value output = args[2];
+                    // Value vecIn1 = rewriter.create<vector::BroadcastOp>(rewriter.getUnknownLoc(), vecType, input_lhs);
+                    // Value vecIn2 = rewriter.create<vector::BroadcastOp>(rewriter.getUnknownLoc(), vecType, input_rhs);
+                    // Value vecOut = rewriter.create<vector::BroadcastOp>(rewriter.getUnknownLoc(), vecType, output);
+
+
+                  Value output = b.create<arith::AddFOp>(loc, input_lhs, input_rhs);
                 //   Value result1 = b.create<arith::AddFOp>(loc, output, result);
-                  b.create<linalg::YieldOp>(loc, result);
+                  b.create<linalg::YieldOp>(loc, output);
+                // Extract the result from the vector
+                
+
+                // Replace the linalg.yield with a new yield operation
+                // SmallVector<Value, 3> vecResults;
+                // Split the vector result into individual elements
+                
+                // for (int i = 0; i < 3; ++i) {
+                //     Value oneElement = rewriter.create<vector::ExtractOp>(
+                //     rewriter.getUnknownLoc(), result, rewriter.getI64ArrayAttr({i}));
+                // vecResults.push_back(oneElement);
+                // }
+                
+                // Create a new yield operation with the vectorized results
+                // b.create<linalg::YieldOp>(rewriter.getUnknownLoc(), ValueRange{result});
+
                 }).getResult(0);
-        // llvm::errs()<<addop<<"\n";
-        // rewriter.replaceOpWithNewOp<tensor::CastOp>(op, lhs.getType(), addop);
-        rewriter.replaceOpWithNewOp<arith::AddFOp>(op, op.getOperand(0), op.getOperand(1));
+            
+        // const char* cStr = "Hello, world!";
+        // llvm::StringRef strRef1(cStr);
+        // auto addop = rewriter.create<linalg::GenericOp>(
+        //     loc,   
+        //         ValueRange{lhs,rhs}, 
+        //         lhs, 
+        //         indexingMaps,
+        //         iteratorTypes,
+        //     /*fun=*/nullptr);
+        // // llvm::errs()<<addop<<"\n";
+        // // Get the body of the linalg.generic operation
+        // Region& region = addop.getRegion();
+        // Block* block = new Block();
+        // region.push_back(block);
+        // // Block* block = rewriter.createBlock(&egion);
+        // llvm::errs()<<"daasad"<<"\n";
+        
+        // // Define the input and output values
+        // // Value in1 = rewriter.create<arith::ConstantOp>(rewriter.getUnknownLoc(), lhs, vecType);
+        // // Value in2 = rewriter.create<arith::ConstantOp>(rewriter.getUnknownLoc(), lhs, vecType);
+        // // Value out = rewriter.create<arith::ConstantOp>(rewriter.getUnknownLoc(),lhs, vecType);
+        // // Value in1 = block->getArgument(0);
+        // // Value in2 = block->getArgument(1);
+        // // Value out = block->getArgument(2);
+
+        // // Create vector types
+        // // VectorType vecType = VectorType::get(4, rewriter.getF32Type());
+
+        // // Vectorize the input and output values
+        // // Value vecIn1 = rewriter.create<vector::BroadcastOp>(rewriter.getUnknownLoc(), vecType, lhs);
+        // // Value vecIn2 = rewriter.create<vector::BroadcastOp>(rewriter.getUnknownLoc(), vecType, lhs);
+        // // Value vecOut = rewriter.create<vector::BroadcastOp>(rewriter.getUnknownLoc(), vecType, lhs);
+
+        // OpResult vecIn1_ = rewriter.create<OpResult>(rewriter.getUnknownLoc(), vecType);
+        // OpResult vecIn2_ = rewriter.create<OpResult>(rewriter.getUnknownLoc(), vecType);
+        // // Create vectorized operations
+        // Value vecRes = rewriter.create<arith::AddFOp>(rewriter.getUnknownLoc(), vecIn1_, vecIn2_);
+        // // vecRes = rewriter.create<MulFOp>(rewriter.getUnknownLoc(), vecOut, vecRes);
+
+        // // Extract the result from the vector
+        // Value res = rewriter.create<vector::ExtractOp>(rewriter.getUnknownLoc(), vecRes, ValueRange{0});
+
+        // // Replace the linalg.yield with a new yield operation
+        // for (Operation& op : *block) {
+        //     if (auto yieldOp = dyn_cast<linalg::YieldOp>(op)) {
+        //     rewriter.setInsertionPoint(yieldOp);
+        //     rewriter.create<linalg::YieldOp>(rewriter.getUnknownLoc(), res);
+        //     yieldOp.erase();
+        //     break;
+        //     }
+        // }
+
+        
+        // rewriter.replaceOpWithNewOp<tensor::CastOp>(op, lhs.getType(), addop.getResult(0));
+        rewriter.replaceOpWithNewOp<tensor::CastOp>(op, lhs.getType(), addop);
+        // rewriter.replaceOpWithNewOp<arith::AddFOp>(op, op.getOperand(0), op.getOperand(1));
         // rewriter.eraseOp(op);
         return success();
     }
@@ -282,7 +363,7 @@ struct ToyToLinalgLoweringPass
             registry.insert<poseidon::PoseidonDialect>();
             registry.insert<AffineDialect, func::FuncDialect, 
             memref::MemRefDialect, linalg::LinalgDialect,
-            tosa::TosaDialect>();
+            tosa::TosaDialect, vector::VectorDialect>();
         }
         void runOnOperation() override;
 };
@@ -301,7 +382,7 @@ void ToyToLinalgLoweringPass::runOnOperation() {
             func::FuncDialect, 
             memref::MemRefDialect,
             AffineDialect, BuiltinDialect, arith::ArithDialect,
-            linalg::LinalgDialect, tosa::TosaDialect>();
+            linalg::LinalgDialect, tosa::TosaDialect, vector::VectorDialect>();
 
     // We also define the Toy dialect as Illegal so that the conversion will fail
     // if any of these operations are *not* converted. Given that we actually want

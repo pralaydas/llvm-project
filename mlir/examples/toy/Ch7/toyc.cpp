@@ -45,6 +45,9 @@
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/raw_ostream.h"
 
+//-------------------
+#include "mlir/Dialect/Linalg/Passes.h"
+//-------------------
 using namespace toy;
 namespace cl = llvm::cl;
 
@@ -171,9 +174,9 @@ int loadAndProcessMLIR(mlir::MLIRContext &context,
 
     // Now that there is only one function, we can infer the shapes of each of
     // the operations.
-    // mlir::OpPassManager &optPM = pm.nest<mlir::toy::FuncOp>(); // dead code elimination
+    mlir::OpPassManager &optPM = pm.nest<mlir::toy::FuncOp>(); // dead code elimination
     // optPM.addPass(mlir::createCanonicalizerPass());
-    // optPM.addPass(mlir::toy::createShapeInferencePass());
+    optPM.addPass(mlir::toy::createShapeInferencePass());
     // optPM.addPass(mlir::createCanonicalizerPass());
     // optPM.addPass(mlir::createCSEPass());
   }
@@ -199,7 +202,7 @@ int loadAndProcessMLIR(mlir::MLIRContext &context,
   if (isLoweringToPoseidon) {
     // Partially lower the toy dialect.
     // Add a few cleanups post lowering.
-    mlir::OpPassManager &optPM = pm.nest<mlir::func::FuncOp>();
+    // mlir::OpPassManager &optPM = pm.nest<mlir::func::FuncOp>();
     // optPM.addPass(mlir::createCanonicalizerPass()); // dead code elimination
     // optPM.addPass(mlir::createCSEPass()); // dead code elimination
     
@@ -209,9 +212,15 @@ int loadAndProcessMLIR(mlir::MLIRContext &context,
     // pm.addPass(mlir::poseidon::createLowerToPoseidonLoopsPass()); // original loop
     
     pm.addPass(mlir::poseidon::createLowerToLinalgPass()); // testing for linalg pass
-
+    
+    
+    // pm.addPass(mlir::poseidon::createLowerLinalgToAffinePass()); // testing lowering for linalg pass
+    
     // pm.addPass(mlir::poseidon::createLowerToLLVMPass()); // written in next line no 219
     // optPM.addPass(mlir::createCSEPass()); // dead code elimination
+    mlir::OpPassManager &optPM = pm.nest<mlir::func::FuncOp>();
+    optPM.addPass(mlir::createLinalgBufferizePass());
+    optPM.addPass(mlir::createConvertLinalgToAffineLoopsPass());
   }
 
   if (isLoweringToLLVM) {

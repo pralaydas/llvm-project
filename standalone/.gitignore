@@ -1,0 +1,3 @@
+build/*
+installed/*
+standalone/installed/lib/libStandaloneCAPITestLib.so.16

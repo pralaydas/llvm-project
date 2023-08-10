@@ -49,6 +49,31 @@ def Standalone_FooOp : Standalone_Op<"foo", [Pure,
 //===----------------------------------------------------------------------===//
 // AddOp
 //===----------------------------------------------------------------------===//
+def AddOp : Standalone_Op<"add", [Pure, Commutative]>{
+    let summary = "element-wise addition operation";
+    let description = [{
+        The 'standalone.add' operation performs element-wise addition between two tensors.
+        The shapes of the tensor operands are expected to match.
+        Example:
+
+        ```mlir
+        %2 = standalone.add (%0, %1) : (tensor<6xf64>, tensor<6xf64>) -> tensor<*xf64>
+        ```
+    }];
+    let arguments = (ins AnyFloat:$lhs, AnyFloat:$rhs);
+    let results = (outs AnyFloat:$result);
+
+    // Indicate that the operation has a custom parser and printer method.
+    let hasCustomAssemblyFormat = 1;
+
+    // Allow building an AddOp with from the two input operands.
+    let builders = [
+        OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+    ];
+    
+
+}
+
 
 
 

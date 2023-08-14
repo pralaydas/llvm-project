@@ -45,6 +45,34 @@ def Standalone_FooOp : Standalone_Op<"foo", [Pure,
     }];
 }
 
+def ConstantOp : Standalone_Op<"constant", [Pure]> {
+    let summary = "constant";
+    let description = [{
+        The `standalone.constant` operation illustrates how to define a constant
+        operation in a dialect. Constant operation turns a literal into an 
+        SSA value. The data is attached to the operation as an attribute.
+
+        Example:
+
+        ```mlir
+        %0 = standalone.constant 1 : i32
+        ```
+    }];
+    let arguments = (ins I32:$value);
+    let results = (outs I32);
+    let assemblyFormat = [{
+        $value attr-dict `:` type($value)
+    }];
+    let builders = [
+        // Build a constant with a given constant tensor value.
+        OpBuilder<(ins "int32_t":$value), [{
+        build($_builder, $_state, value);
+        }]>,
+
+        // Build a constant with a given constant floating-point value.
+        // OpBuilder<(ins "double":$value)>
+    ];
+}
 
 //===----------------------------------------------------------------------===//
 // AddOp

@@ -29,3 +29,28 @@ cmake -G Ninja \
 ninja -j2
 ninja check-standalone
 ```
+## run examples
+Assume there are some examples in example directory in Linalg Dialect
+```sh
+./build/bin/standalone-opt ./examples/torch_linear.mlir -linalg-to-standalone -standalone-to-LLVM > ./examples/llvm_linear.mlir
+```
+It will dump llvm mlir file to ./examples/llvm_linear.mlir. After
+```sh
+./build/bin/standalone-translate ./examples/llvm_linear.mlir -mlir-to-llvmir > ./examples/llvm_linear.ll
+```
+It will dump llvm file to ./examples/llvm_linear.ll. If you want to utilize llvm O3 pass
+```sh
+../installed/bin/opt -S examples/llvm_linear.ll -O3 -o examples/llvm_linear_O3.ll
+```
+create bitcode file corresponding to the .ll file
+```sh
+../installed/bin/llvm-as ./examples/llvm_linear_O3.ll
+```
+execute the file
+```sh
+./installed/bin/lli ./examples/llvm_linear_O3.bc
+```
+an example for run pass using pass pipeline
+```sh
+./build/bin/standalone-opt ./examples/linear_tosa.mlir --pass-pipeline="builtin.module(func.func(tosa-to-linalg))"
+```

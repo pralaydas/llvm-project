@@ -113,7 +113,34 @@ Consult the
 page for detailed information on configuring and compiling LLVM. You can visit
 [Directory Layout](https://llvm.org/docs/GettingStarted.html#directory-layout)
 to learn about the layout of the source code tree.
-
+## My building
+```sh
+mkdir build
+cd build
+cmake -G "Ninja" \
+-DCMAKE_C_COMPILER=$(which clang) \
+-DCMAKE_CXX_COMPILER=$(which clang++) \
+-DLLVM_ENABLE_PROJECTS="clang;mlir" \
+-DLLVM_TARGETS_TO_BUILD="X86" \
+-DCMAKE_BUILD_TYPE="Debug" \
+-DLLVM_ENABLE_ASSERTIONS=ON \
+-DLLVM_BUILD_EXAMPLES=ON \
+-DLLVM_PARALLEL_COMPILE_JOBS=126 \
+-DCMAKE_INSTALL_PREFIX=$(pwd)/../installed \
+-DLLVM_PARALLEL_LINK_JOBS=126 \
+-DCMAKE_INSTALL_PREFIX=$(pwd)/../installed \
+-DLLVM_PARALLEL_LINK_JOBS=126 \
+-DBUILD_SHARED_LIBS=OFF \
+-DLLVM_USE_SPLIT_DWARF=ON \
+-DLLVM_USE_LINKER=gold \
+-DLLVM_OPTIMIZED_TABLEGEN=ON \
+-DCMAKE_EXE_LINKER_FLAGS='-Wl,-no-keep-memory,-fuse-ld=gold' \
+-DLLVM_CCACHE_BUILD=ON \
+-DLLVM_INSTALL_UTILS=ON \
+../llvm
+ninja install
+cd ..
+```
 ## Getting in touch
 
 Join [LLVM Discourse forums](https://discourse.llvm.org/), [discord chat](https://discord.gg/xS7Z362) or #llvm IRC channel on [OFTC](https://oftc.net/).

@@ -16,3 +16,16 @@ cmake --build . --target mlir-doc
 ```
 **Note**: Make sure to pass `-DLLVM_INSTALL_UTILS=ON` when building LLVM with CMake in order to install `FileCheck` to the chosen installation prefix.
 
+## My building
+```sh
+mkdir build && cd build
+
+cmake -G Ninja \
+-DMLIR_DIR=$PWD/../../installed/lib/cmake/mlir \
+-DLLVM_EXTERNAL_LIT=$PWD/../../build/bin/llvm-lit \
+-DCMAKE_INSTALL_PREFIX=$(pwd)/../installed \
+../
+
+ninja -j2
+ninja check-standalone
+```
